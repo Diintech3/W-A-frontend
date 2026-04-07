@@ -54,7 +54,7 @@ export default function ContactGroups() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="sticky top-0 z-10 bg-[#0F172A] py-2 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#F1F5F9]">Contact groups</h1>
           <p className="text-sm text-slate-400">
