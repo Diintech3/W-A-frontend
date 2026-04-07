@@ -76,6 +76,7 @@ export const contactsApi = {
     }),
   groups: () => api.get('/contacts/groups'),
   createGroup: (body) => api.post('/contacts/groups', body),
+  deleteGroup: (id) => api.delete(`/contacts/groups/${id}`),
 }
 
 export const templatesApi = {
