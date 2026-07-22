@@ -63,6 +63,8 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
   connectWhatsApp: (body) => api.post('/whatsapp/connect', body),
+  saveAIAgentId: (body) => api.post('/whatsapp/agent', body),
+  getAIAgentId: () => api.get('/whatsapp/agent'),
 }
 
 export const contactsApi = {
@@ -91,6 +93,7 @@ export const campaignsApi = {
   list: () => api.get('/campaigns'),
   get: (id) => api.get(`/campaigns/${id}`),
   create: (body) => api.post('/campaigns', body),
+  update: (id, body) => api.patch(`/campaigns/${id}`, body),
   send: (id) => api.post(`/campaigns/${id}/send`),
   remove: (id) => api.delete(`/campaigns/${id}`),
 }

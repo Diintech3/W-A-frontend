@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { authApi } from '../../services/api'
 import { Card } from '../../components/ui/Card'
@@ -11,6 +11,39 @@ export default function Settings() {
   const [phoneId, setPhoneId] = useState('')
   const [token, setToken] = useState('')
   const [saving, setSaving] = useState(false)
+  const [agentId, setAgentId] = useState('')
+  const [savingAgent, setSavingAgent] = useState(false)
+
+  useEffect(() => {
+    async function fetchAgentId() {
+      try {
+        const { data } = await authApi.getAIAgentId()
+        if (data.success && data.data?.agentId) {
+          setAgentId(data.data.agentId)
+        }
+      } catch (err) {
+        console.error('Failed to load AI Agent ID:', err)
+      }
+    }
+    fetchAgentId()
+  }, [])
+
+  async function handleSaveAgent(e) {
+    e.preventDefault()
+    setSavingAgent(true)
+    try {
+      const { data } = await authApi.saveAIAgentId({ agentId: agentId.trim() })
+      if (data.success) {
+        toast.success(data.message || 'AI Agent ID saved')
+      } else {
+        toast.error(data.message)
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save AI Agent ID')
+    } finally {
+      setSavingAgent(false)
+    }
+  }
 
   async function connect(e) {
     e.preventDefault()
@@ -92,6 +125,30 @@ export default function Settings() {
           />
           <Button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save connection'}
+          </Button>
+        </form>
+      </Card>
+
+      <Card title="AI Agent Settings">
+        {agentId && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-3 py-2">
+            <span className="h-2 w-2 rounded-full bg-[#3B82F6]"></span>
+            <span className="text-xs text-[#60A5FA]">Active Agent: {agentId}</span>
+          </div>
+        )}
+        <p className="text-xs text-slate-500 mb-4">
+          Enter the external Agent ID from your <code className="text-[#60A5FA]">vectorize.onthewifi.com</code> portal. 
+          If configured, this agent will be queried for RAG-based auto-replies before falling back to generic responses.
+        </p>
+        <form onSubmit={handleSaveAgent} className="space-y-4">
+          <Input
+            label="AI Agent ID"
+            value={agentId}
+            onChange={(e) => setAgentId(e.target.value)}
+            placeholder="e.g. da3243d9babb9387"
+          />
+          <Button type="submit" disabled={savingAgent}>
+            {savingAgent ? 'Saving…' : 'Save Agent ID'}
           </Button>
         </form>
       </Card>
