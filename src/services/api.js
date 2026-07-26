@@ -15,7 +15,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken')
+  const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -65,6 +65,7 @@ export const authApi = {
   connectWhatsApp: (body) => api.post('/whatsapp/connect', body),
   saveAIAgentId: (body) => api.post('/whatsapp/agent', body),
   getAIAgentId: () => api.get('/whatsapp/agent'),
+  impersonate: (body) => api.post('/auth/impersonate', body),
 }
 
 export const contactsApi = {
@@ -118,6 +119,25 @@ export const analyticsApi = {
   overview: () => api.get('/analytics/overview'),
   campaigns: () => api.get('/analytics/campaigns'),
   timeline: () => api.get('/analytics/timeline'),
+}
+
+export const superadminApi = {
+  stats: () => api.get('/superadmin/stats'),
+  listAdmins: () => api.get('/superadmin/admins'),
+  createAdmin: (body) => api.post('/superadmin/admins', body),
+  updateAdmin: (id, body) => api.put(`/superadmin/admins/${id}`, body),
+  deleteAdmin: (id) => api.delete(`/superadmin/admins/${id}`),
+  listClients: () => api.get('/superadmin/clients'),
+  updateClient: (id, body) => api.put(`/superadmin/clients/${id}`, body),
+  deleteClient: (id) => api.delete(`/superadmin/clients/${id}`),
+}
+
+export const adminApi = {
+  stats: () => api.get('/admin/stats'),
+  listClients: () => api.get('/admin/clients'),
+  createClient: (body) => api.post('/admin/clients', body),
+  updateClient: (id, body) => api.put(`/admin/clients/${id}`, body),
+  deleteClient: (id) => api.delete(`/admin/clients/${id}`),
 }
 
 export default api

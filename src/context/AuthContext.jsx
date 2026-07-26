@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const loadMe = useCallback(async () => {
-    const token = localStorage.getItem('accessToken')
+    const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken')
     if (!token) {
       setUser(null)
       setLoading(false)
@@ -29,8 +29,8 @@ export function AuthProvider({ children }) {
     loadMe()
   }, [loadMe])
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await authApi.login({ email, password })
+  const login = useCallback(async (email, password, expectedRole = null) => {
+    const { data } = await authApi.login({ email, password, expectedRole })
     if (data.success && data.data?.accessToken) {
       localStorage.setItem('accessToken', data.data.accessToken)
       setUser(data.data.user)
@@ -53,7 +53,14 @@ export function AuthProvider({ children }) {
     } catch {
       /* ignore */
     }
-    localStorage.removeItem('accessToken')
+    if (sessionStorage.getItem('isImpersonatedSession')) {
+      sessionStorage.clear()
+    } else {
+      sessionStorage.clear()
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('originalAccessToken')
+      localStorage.removeItem('originalUser')
+    }
     setUser(null)
   }, [])
 
@@ -66,6 +73,50 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const impersonate = useCallback(async (targetUserId) => {
+    const { data } = await authApi.impersonate({ targetUserId })
+    if (data.success && data.data?.accessToken) {
+      if (!localStorage.getItem('originalAccessToken')) {
+        localStorage.setItem('originalAccessToken', localStorage.getItem('accessToken') || '')
+        localStorage.setItem('originalUser', JSON.stringify(user))
+      }
+      localStorage.setItem('accessToken', data.data.accessToken)
+      setUser(data.data.user)
+    }
+    return data
+  }, [user])
+
+  const openWorkspaceInNewTab = useCallback(async (targetUserId, targetRole = 'client') => {
+    const { data } = await authApi.impersonate({ targetUserId })
+    if (data.success && data.data?.accessToken) {
+      const token = data.data.accessToken
+      const url = `/impersonate-session?token=${encodeURIComponent(token)}&role=${targetRole}`
+      window.open(url, '_blank')
+    }
+    return data
+  }, [])
+
+  const revertImpersonation = useCallback(async () => {
+    const origToken = localStorage.getItem('originalAccessToken')
+    const origUserStr = localStorage.getItem('originalUser')
+    if (origToken) {
+      localStorage.setItem('accessToken', origToken)
+      localStorage.removeItem('originalAccessToken')
+      localStorage.removeItem('originalUser')
+      if (origUserStr) {
+        try { setUser(JSON.parse(origUserStr)) } catch { /* ignore */ }
+      }
+      await refreshUser()
+    }
+  }, [refreshUser])
+
+  const isImpersonating = Boolean(localStorage.getItem('originalAccessToken')) || Boolean(sessionStorage.getItem('isImpersonatedSession'))
+  let originalUser = null
+  try {
+    const str = localStorage.getItem('originalUser')
+    if (str) originalUser = JSON.parse(str)
+  } catch { /* ignore */ }
+
   const value = useMemo(
     () => ({
       user,
@@ -73,10 +124,16 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      loadMe,
       refreshUser,
+      impersonate,
+      openWorkspaceInNewTab,
+      revertImpersonation,
+      isImpersonating,
+      originalUser,
       isAuthenticated: Boolean(user),
     }),
-    [user, loading, login, register, logout, refreshUser]
+    [user, loading, login, register, logout, loadMe, refreshUser, impersonate, openWorkspaceInNewTab, revertImpersonation, isImpersonating, originalUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

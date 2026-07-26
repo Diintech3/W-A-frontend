@@ -129,28 +129,21 @@ export default function Settings() {
         </form>
       </Card>
 
-      <Card title="AI Agent Settings">
-        {agentId && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-3 py-2">
-            <span className="h-2 w-2 rounded-full bg-[#3B82F6]"></span>
-            <span className="text-xs text-[#60A5FA]">Active Agent: {agentId}</span>
+      <Card title="AI Agent Status">
+        {user?.aiAgentActive || agentId ? (
+          <div className="flex items-center gap-2 rounded-lg bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-4 py-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#3B82F6] animate-pulse"></span>
+            <span className="text-sm font-bold text-[#60A5FA]">AI Agent: Active</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-lg bg-slate-800 border border-slate-700 px-4 py-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-500"></span>
+            <span className="text-sm font-bold text-slate-400">AI Agent: Inactive / Not Assigned</span>
           </div>
         )}
-        <p className="text-xs text-slate-500 mb-4">
-          Enter the external Agent ID from your <code className="text-[#60A5FA]">vectorize.onthewifi.com</code> portal. 
-          If configured, this agent will be queried for RAG-based auto-replies before falling back to generic responses.
+        <p className="mt-3 text-xs text-slate-500">
+          Your AI Bot auto-replies are managed by your Reseller Agency / Admin. Contact support for modifications.
         </p>
-        <form onSubmit={handleSaveAgent} className="space-y-4">
-          <Input
-            label="AI Agent ID"
-            value={agentId}
-            onChange={(e) => setAgentId(e.target.value)}
-            placeholder="e.g. da3243d9babb9387"
-          />
-          <Button type="submit" disabled={savingAgent}>
-            {savingAgent ? 'Saving…' : 'Save Agent ID'}
-          </Button>
-        </form>
       </Card>
     </div>
   )

@@ -10,8 +10,10 @@ import {
   Settings,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../../hooks/useAuth'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +28,7 @@ const links = [
 
 export function Sidebar() {
   const [open, setOpen] = useState(false)
+  const { logout } = useAuth()
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 p-3">
@@ -76,6 +79,16 @@ export function Sidebar() {
           </div>
         </div>
         {nav}
+        <div className="mt-auto p-4 border-t border-[#334155]">
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 px-4 py-2.5 text-sm font-bold transition-all shadow-sm"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
       {open && (
         <button
