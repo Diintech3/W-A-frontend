@@ -45,11 +45,16 @@ api.interceptors.response.use(
         }
         const { data } = await refreshing
         if (data?.success && data.data?.accessToken) {
-          localStorage.setItem('accessToken', data.data.accessToken)
+          if (sessionStorage.getItem('accessToken')) {
+            sessionStorage.setItem('accessToken', data.data.accessToken)
+          } else {
+            localStorage.setItem('accessToken', data.data.accessToken)
+          }
           original.headers.Authorization = `Bearer ${data.data.accessToken}`
           return api(original)
         }
       } catch {
+        sessionStorage.removeItem('accessToken')
         localStorage.removeItem('accessToken')
       }
     }
