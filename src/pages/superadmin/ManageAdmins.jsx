@@ -5,7 +5,7 @@ import { useAuthContext } from '../../context/AuthContext'
 import { Card } from '../../components/ui/Card'
 import { Loader } from '../../components/ui/Loader'
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table'
-import { ShieldCheck, Plus, Trash2, X, Check, ExternalLink, Edit2, Save } from 'lucide-react'
+import { ShieldCheck, Plus, Trash2, X, Check, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle, Share2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function ManageAdmins() {
@@ -13,6 +13,9 @@ export default function ManageAdmins() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [editingAdmin, setEditingAdmin] = useState(null)
+  const [sharingAdmin, setSharingAdmin] = useState(null)
+  const [generatingKeys, setGeneratingKeys] = useState(false)
+  const [copiedField, setCopiedField] = useState('')
   const { openWorkspaceInNewTab } = useAuthContext()
   const navigate = useNavigate()
 
@@ -132,6 +135,66 @@ export default function ManageAdmins() {
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to access admin workspace')
     }
+  }
+
+  const handleOpenSharing = (admin) => {
+    setSharingAdmin(admin)
+  }
+
+  const handleGenerateSharing = async (id) => {
+    setGeneratingKeys(true)
+    try {
+      const res = await superadminApi.generateApiSharing(id)
+      if (res.data.success) {
+        toast.success('API Sharing credentials generated successfully!')
+        const updatedAdmin = {
+          ...sharingAdmin,
+          apiSharing: {
+            isEnabled: true,
+            apiSharingKey: res.data.data.apiSharingKey,
+            accessToken: res.data.data.accessToken,
+            referenceKey: res.data.data.referenceKey,
+            generatedAt: new Date(),
+          },
+        }
+        setSharingAdmin(updatedAdmin)
+        loadAdmins()
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to generate credentials')
+    } finally {
+      setGeneratingKeys(false)
+    }
+  }
+
+  const handleRevokeSharing = async (id) => {
+    if (!window.confirm('Are you sure you want to revoke these API Sharing credentials? External redirection from Magnifi AI will stop working immediately.')) return
+    try {
+      const res = await superadminApi.revokeApiSharing(id)
+      if (res.data.success) {
+        toast.success('API Sharing credentials revoked')
+        const updatedAdmin = {
+          ...sharingAdmin,
+          apiSharing: {
+            isEnabled: false,
+            apiSharingKey: '',
+            accessToken: '',
+            referenceKey: '',
+          },
+        }
+        setSharingAdmin(updatedAdmin)
+        loadAdmins()
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to revoke credentials')
+    }
+  }
+
+  const copyToClipboard = (text, fieldName) => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(fieldName)
+    toast.success(`${fieldName} copied to clipboard!`)
+    setTimeout(() => setCopiedField(''), 2000)
   }
 
   if (loading && admins.length === 0) return <Loader label="Loading admin accounts..." />
@@ -417,6 +480,14 @@ export default function ManageAdmins() {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        onClick={() => handleOpenSharing(admin)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-extrabold text-xs transition-all"
+                        title="Generate Magnifi AI Integration Credentials"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>API Sharing</span>
+                      </button>
+                      <button
                         onClick={() => handleStartEdit(admin)}
                         className="p-2 rounded-xl bg-[#090D16] hover:bg-[#F59E0B]/15 text-slate-400 hover:text-[#F59E0B] border border-[#1F2937] transition-all"
                         title="Edit Admin Quotas & Details"
@@ -438,6 +509,114 @@ export default function ManageAdmins() {
           </TBody>
         </Table>
       </Card>
+
+      {sharingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <Card className="!bg-[#111827] !border-[#1F2937] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-[#1F2937] mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                  <Share2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Magnifi AI Integration & API Sharing</h3>
+                  <p className="text-xs text-slate-400">Configure external redirection credentials for <span className="text-[#F59E0B] font-bold">{sharingAdmin.name} ({sharingAdmin.email})</span></p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSharingAdmin(null)}
+                className="p-1.5 rounded-lg bg-[#090D16] text-slate-400 hover:text-white border border-[#1F2937]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div className="p-3.5 rounded-xl bg-[#090D16] border border-[#1F2937] flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-300">API Sharing Status</p>
+                  <p className="text-[11px] text-slate-400">Enables Magnifi AI Super Admin to redirect directly to this portal</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-black ${sharingAdmin.apiSharing?.isEnabled ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                  {sharingAdmin.apiSharing?.isEnabled ? '🟢 Active & Enabled' : '⚪ Not Generated / Inactive'}
+                </span>
+              </div>
+
+              {sharingAdmin.apiSharing?.isEnabled ? (
+                <div className="space-y-3 bg-[#090D16]/50 p-4 rounded-xl border border-[#1F2937]">
+                  <p className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+                    <Key className="w-4 h-4" /> Copy these credentials into Magnifi AI's <code className="text-white bg-black px-1.5 py-0.5 rounded border border-slate-700">Backend/.env</code> file:
+                  </p>
+
+                  {[
+                    { label: 'WHATS_AI_BASE_URL', value: window.location.origin },
+                    { label: 'WHATS_AI_ADMIN_ID', value: sharingAdmin.email },
+                    { label: 'WHATS_AI_API_SHARING_KEY', value: sharingAdmin.apiSharing.apiSharingKey },
+                    { label: 'WHATS_AI_ACCESS_TOKEN', value: sharingAdmin.apiSharing.accessToken },
+                    { label: 'WHATS_AI_REFERENCE_KEY', value: sharingAdmin.apiSharing.referenceKey },
+                  ].map((field) => (
+                    <div key={field.label} className="space-y-1">
+                      <label className="text-[11px] font-extrabold text-slate-400">{field.label}</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={field.value}
+                          className="w-full bg-[#090D16] border border-[#334155] rounded-lg px-3 py-1.5 text-xs font-mono text-emerald-400 select-all"
+                        />
+                        <button
+                          onClick={() => copyToClipboard(field.value, field.label)}
+                          className="px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-[#334155] text-white text-xs font-bold flex items-center gap-1.5 border border-[#334155] transition-all shrink-0"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>{copiedField === field.label ? 'Copied!' : 'Copy'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-3 flex items-center justify-between border-t border-[#1F2937]">
+                    <p className="text-[11px] text-slate-400">Generated on: {new Date(sharingAdmin.apiSharing.generatedAt || Date.now()).toLocaleString()}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleGenerateSharing(sharingAdmin._id)}
+                        disabled={generatingKeys}
+                        className="px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500 text-yellow-400 hover:text-black font-extrabold text-xs transition-all flex items-center gap-1.5"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${generatingKeys ? 'animate-spin' : ''}`} />
+                        <span>Re-generate Keys</span>
+                      </button>
+                      <button
+                        onClick={() => handleRevokeSharing(sharingAdmin._id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white font-extrabold text-xs transition-all flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Revoke Access</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-[#090D16]/50 rounded-xl border border-dashed border-[#334155] p-6">
+                  <AlertCircle className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-white mb-1">No Integration Credentials Generated</p>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto mb-4">
+                    Generate secure API Sharing tokens so Magnifi AI Super Admin can connect to and launch this Admin account without sharing passwords.
+                  </p>
+                  <button
+                    onClick={() => handleGenerateSharing(sharingAdmin._id)}
+                    disabled={generatingKeys}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs transition-all shadow-lg shadow-purple-600/20"
+                  >
+                    <Key className={`w-4 h-4 ${generatingKeys ? 'animate-spin' : ''}`} />
+                    <span>Generate Magnifi AI Credentials</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

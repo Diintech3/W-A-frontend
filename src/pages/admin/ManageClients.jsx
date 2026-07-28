@@ -5,7 +5,7 @@ import { useAuthContext } from '../../context/AuthContext'
 import { Card } from '../../components/ui/Card'
 import { Loader } from '../../components/ui/Loader'
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table'
-import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save } from 'lucide-react'
+import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function ManageClients() {
@@ -13,6 +13,9 @@ export default function ManageClients() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [editingClient, setEditingClient] = useState(null)
+  const [sharingClient, setSharingClient] = useState(null)
+  const [generatingKeys, setGeneratingKeys] = useState(false)
+  const [copiedField, setCopiedField] = useState('')
   const { openWorkspaceInNewTab } = useAuthContext()
   const navigate = useNavigate()
 
@@ -146,6 +149,61 @@ export default function ManageClients() {
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to access client workspace')
     }
+  }
+
+  const handleOpenSharing = (client) => {
+    setSharingClient(client)
+  }
+
+  const handleGenerateSharing = async (id) => {
+    setGeneratingKeys(true)
+    try {
+      const res = await adminApi.generateClientApiSharing(id)
+      if (res.data.success) {
+        toast.success('Client API Sharing credentials generated successfully!')
+        const updatedClient = {
+          ...sharingClient,
+          apiSharing: {
+            isEnabled: true,
+            apiSharingKey: res.data.data.apiSharingKey,
+            accessToken: res.data.data.accessToken,
+            referenceKey: res.data.data.referenceKey,
+            generatedAt: new Date(),
+          },
+        }
+        setSharingClient(updatedClient)
+        loadClients()
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to generate client API sharing credentials')
+    } finally {
+      setGeneratingKeys(false)
+    }
+  }
+
+  const handleRevokeSharing = async (id) => {
+    if (!window.confirm('Are you sure you want to revoke API Sharing access for this client?')) return
+    try {
+      const res = await adminApi.revokeClientApiSharing(id)
+      if (res.data.success) {
+        toast.success('API Sharing access revoked')
+        const updatedClient = {
+          ...sharingClient,
+          apiSharing: { isEnabled: false },
+        }
+        setSharingClient(updatedClient)
+        loadClients()
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to revoke API sharing access')
+    }
+  }
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(field)
+    toast.success(`Copied ${field}!`)
+    setTimeout(() => setCopiedField(''), 2000)
   }
 
   if (loading && clients.length === 0) return <Loader label="Loading client accounts..." />
@@ -570,6 +628,14 @@ export default function ManageClients() {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        onClick={() => handleOpenSharing(client)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-extrabold text-xs transition-all"
+                        title="Generate or view SSO / API Sharing credentials for Magnifi AI"
+                      >
+                        <Key className="w-3.5 h-3.5" />
+                        <span>API Sharing</span>
+                      </button>
+                      <button
                         onClick={() => handleStartEdit(client)}
                         className="p-2 rounded-xl bg-[#080E1E] hover:bg-[#3B82F6]/15 text-slate-400 hover:text-[#3B82F6] border border-[#1E293B] transition-all"
                         title="Edit Client Details & WhatsApp API"
@@ -591,6 +657,96 @@ export default function ManageClients() {
           </TBody>
         </Table>
       </Card>
+
+      {sharingClient && (
+        <div className="mt-8 animate-fadeIn">
+          <Card title={`Magnifi AI — Client SSO & API Sharing (${sharingClient.name})`} className="!bg-[#0F172A] !border-purple-500/30 shadow-2xl shadow-purple-900/10">
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1F2937]">
+                <div>
+                  <h3 className="text-base font-extrabold text-white">Client Portal SSO Integration Credentials</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Map this Client Account (<code className="text-purple-400 font-mono">{sharingClient.email}</code>) to a Magnifi AI Workspace so Super Admin can access it directly.
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-black ${sharingClient.apiSharing?.isEnabled ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                  {sharingClient.apiSharing?.isEnabled ? '🟢 Active & Enabled' : '⚪ Not Generated / Inactive'}
+                </span>
+              </div>
+
+              {sharingClient.apiSharing?.isEnabled ? (
+                <div className="space-y-3 bg-[#090D16]/50 p-4 rounded-xl border border-[#1F2937]">
+                  <p className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+                    <Key className="w-4 h-4" /> Copy these 3 credentials into Magnifi AI's <span className="text-white bg-black px-1.5 py-0.5 rounded border border-slate-700">Add Client Credentials</span> modal:
+                  </p>
+
+                  {[
+                    { label: 'API SHARING KEY', value: sharingClient.apiSharing.apiSharingKey },
+                    { label: 'ACCESS TOKEN', value: sharingClient.apiSharing.accessToken },
+                    { label: 'REFERENCE KEY', value: sharingClient.apiSharing.referenceKey },
+                  ].map((field) => (
+                    <div key={field.label} className="space-y-1">
+                      <label className="text-[11px] font-extrabold text-slate-400">{field.label}</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={field.value}
+                          className="w-full bg-[#090D16] border border-[#334155] rounded-lg px-3 py-1.5 text-xs font-mono text-emerald-400 select-all"
+                        />
+                        <button
+                          onClick={() => copyToClipboard(field.value, field.label)}
+                          className="px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-[#334155] text-white text-xs font-bold flex items-center gap-1.5 border border-[#334155] transition-all shrink-0"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>{copiedField === field.label ? 'Copied!' : 'Copy'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-3 flex items-center justify-between border-t border-[#1F2937]">
+                    <p className="text-[11px] text-slate-400">Generated on: {new Date(sharingClient.apiSharing.generatedAt || Date.now()).toLocaleString()}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleGenerateSharing(sharingClient._id)}
+                        disabled={generatingKeys}
+                        className="px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500 text-yellow-400 hover:text-black font-extrabold text-xs transition-all flex items-center gap-1.5"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${generatingKeys ? 'animate-spin' : ''}`} />
+                        <span>Re-generate Keys</span>
+                      </button>
+                      <button
+                        onClick={() => handleRevokeSharing(sharingClient._id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white font-extrabold text-xs transition-all flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Revoke Access</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-[#090D16]/50 rounded-xl border border-dashed border-[#334155] p-6">
+                  <AlertCircle className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-white mb-1">No Integration Credentials Generated</p>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto mb-4">
+                    Generate secure API Sharing tokens so Magnifi AI Super Admin can map and access this Client account directly without passwords.
+                  </p>
+                  <button
+                    onClick={() => handleGenerateSharing(sharingClient._id)}
+                    disabled={generatingKeys}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs transition-all shadow-lg shadow-purple-600/20"
+                  >
+                    <Key className={`w-4 h-4 ${generatingKeys ? 'animate-spin' : ''}`} />
+                    <span>Generate Magnifi AI Client Credentials</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

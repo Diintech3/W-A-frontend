@@ -4,7 +4,7 @@ import axios from 'axios'
 export function getApiBase() {
   const fromEnv = import.meta.env.VITE_API_URL
   if (fromEnv) return fromEnv.replace(/\/$/, '')
-  if (import.meta.env.DEV) return 'http://localhost:5000/api'
+  if (import.meta.env.DEV) return 'http://localhost:5005/api'
   return '/api'
 }
 
@@ -71,6 +71,7 @@ export const authApi = {
   saveAIAgentId: (body) => api.post('/whatsapp/agent', body),
   getAIAgentId: () => api.get('/whatsapp/agent'),
   impersonate: (body) => api.post('/auth/impersonate', body),
+  apiSharingLogin: (body) => api.post('/auth/api-sharing-login', body),
 }
 
 export const contactsApi = {
@@ -132,9 +133,13 @@ export const superadminApi = {
   createAdmin: (body) => api.post('/superadmin/admins', body),
   updateAdmin: (id, body) => api.put(`/superadmin/admins/${id}`, body),
   deleteAdmin: (id) => api.delete(`/superadmin/admins/${id}`),
+  generateApiSharing: (id) => api.post(`/superadmin/admins/${id}/api-sharing`),
+  revokeApiSharing: (id) => api.delete(`/superadmin/admins/${id}/api-sharing`),
   listClients: () => api.get('/superadmin/clients'),
   updateClient: (id, body) => api.put(`/superadmin/clients/${id}`, body),
   deleteClient: (id) => api.delete(`/superadmin/clients/${id}`),
+  generateClientApiSharing: (id) => api.post(`/superadmin/clients/${id}/api-sharing`),
+  revokeClientApiSharing: (id) => api.delete(`/superadmin/clients/${id}/api-sharing`),
 }
 
 export const adminApi = {
@@ -143,6 +148,8 @@ export const adminApi = {
   createClient: (body) => api.post('/admin/clients', body),
   updateClient: (id, body) => api.put(`/admin/clients/${id}`, body),
   deleteClient: (id) => api.delete(`/admin/clients/${id}`),
+  generateClientApiSharing: (id) => api.post(`/admin/clients/${id}/api-sharing`),
+  revokeClientApiSharing: (id) => api.delete(`/admin/clients/${id}/api-sharing`),
 }
 
 export default api

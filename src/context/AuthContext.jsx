@@ -16,10 +16,16 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await authApi.me()
-      if (data.success) setUser(data.data.user)
-      else setUser(null)
+      if (data.success) {
+        setUser(data.data.user)
+        return data.data.user
+      } else {
+        setUser(null)
+        return null
+      }
     } catch {
       setUser(null)
+      return null
     } finally {
       setLoading(false)
     }

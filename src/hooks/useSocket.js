@@ -16,7 +16,7 @@ export function useSocket() {
 
     const url =
       import.meta.env.VITE_SOCKET_URL ||
-      (import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin)
+      (import.meta.env.DEV ? 'http://localhost:5005' : window.location.origin)
     const s = io(url, {
       path: '/socket.io',
       transports: ['polling', 'websocket'],

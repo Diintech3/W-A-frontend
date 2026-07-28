@@ -8,6 +8,7 @@ import { Loader } from './components/ui/Loader'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ImpersonateSessionHandler from './pages/auth/ImpersonateSessionHandler'
+import ApiSharingSessionHandler from './pages/auth/ApiSharingSessionHandler'
 import Dashboard from './pages/dashboard/Dashboard'
 import Contacts from './pages/contacts/Contacts'
 import ContactGroups from './pages/contacts/ContactGroups'
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
   {
     path: '/impersonate-session',
     element: <ImpersonateSessionHandler />,
+  },
+  {
+    path: '/auth/api-share',
+    element: <ApiSharingSessionHandler />,
   },
   {
     path: '/login',
