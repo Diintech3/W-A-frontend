@@ -1,12 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, Fragment } from 'react'
 import toast from 'react-hot-toast'
-import { adminApi } from '../../services/api'
+import { adminApi, templatesApi } from '../../services/api'
 import { useAuthContext } from '../../context/AuthContext'
 import { Card } from '../../components/ui/Card'
 import { Loader } from '../../components/ui/Loader'
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table'
-import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle } from 'lucide-react'
+import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle, ChevronDown, ChevronUp, FileText, CheckCircle2, Clock, XCircle, Send, Zap, Eye } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { TemplatePreview } from '../../components/shared/TemplatePreview'
+
+// ─── Meta Status Badge ────────────────────────────────────────────────────────
+function MetaStatusBadge({ status }) {
+  const config = {
+    APPROVED: { color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: CheckCircle2, label: 'Approved' },
+    PENDING:  { color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Clock, label: 'Pending' },
+    REJECTED: { color: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle, label: 'Rejected' },
+    DISABLED: { color: 'bg-slate-500/15 text-slate-400 border-slate-500/30', icon: AlertCircle, label: 'Disabled' },
+    DRAFT:    { color: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: FileText, label: 'Draft' },
+  }
+  const c = config[status] || config.DRAFT
+  const Icon = c.icon
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${c.color}`}>
+      <Icon className="h-3 w-3" />
+      {c.label}
+    </span>
+  )
+}
 
 export default function ManageClients() {
   const [clients, setClients] = useState([])
@@ -18,6 +38,9 @@ export default function ManageClients() {
   const [copiedField, setCopiedField] = useState('')
   const { openWorkspaceInNewTab } = useAuthContext()
   const navigate = useNavigate()
+  const [previewTemplateId, setPreviewTemplateId] = useState(null)
+
+
 
   const [form, setForm] = useState({
     name: '',
@@ -205,6 +228,7 @@ export default function ManageClients() {
     toast.success(`Copied ${field}!`)
     setTimeout(() => setCopiedField(''), 2000)
   }
+
 
   if (loading && clients.length === 0) return <Loader label="Loading client accounts..." />
 
@@ -537,121 +561,95 @@ export default function ManageClients() {
               </TR>
             ) : (
               activeClients.map((client) => (
-                <TR key={client._id} className="!border-[#1E293B] hover:bg-[#1E293B]/40">
-                  <TD className="font-bold text-white">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-[#080E1E] border border-[#1E293B] flex items-center justify-center text-[#3B82F6] font-black">
-                        {client.name.charAt(0)}
+                <Fragment key={client._id}>
+                  {/* ── Main client row ── */}
+                  <TR
+                    key={client._id}
+                    className="!border-[#1E293B] cursor-pointer transition-all hover:bg-[#1E293B]/40"
+                    onClick={() => navigate(`/admin/clients/${client._id}/templates`)}
+                  >
+                    <TD className="font-bold text-white">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg border flex items-center justify-center font-black text-sm transition-colors bg-[#080E1E] border-[#1E293B] text-[#3B82F6]">
+                          {client.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">{client.name}</p>
+                          <p className="text-[11px] text-[#3B82F6] font-semibold">{client.businessName || 'Business'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">{client.name}</p>
-                        <p className="text-[11px] text-[#3B82F6] font-semibold">{client.businessName || 'Business'}</p>
-                      </div>
-                    </div>
-                  </TD>
-                  <TD>
-                    <p className="text-sm text-slate-200">{client.email}</p>
-                    <p className="text-xs text-slate-400">{client.phone || 'No phone'}</p>
-                  </TD>
-                  <TD>
-                    <select
-                      value={client.status || 'active'}
-                      onChange={(e) => handleStatusChange(client._id, e.target.value)}
-                      className={`rounded-lg border px-2.5 py-1 text-xs font-bold focus:outline-none capitalize ${
-                        client.status === 'pending'
-                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                          : client.status === 'rejected'
-                          ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                    </TD>
+                    <TD onClick={(e) => e.stopPropagation()}>
+                      <p className="text-sm text-slate-200">{client.email}</p>
+                      <p className="text-xs text-slate-400">{client.phone || 'No phone'}</p>
+                    </TD>
+                    <TD onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={client.status || 'active'}
+                        onChange={(e) => handleStatusChange(client._id, e.target.value)}
+                        className={`rounded-lg border px-2.5 py-1 text-xs font-bold focus:outline-none capitalize ${
+                          client.status === 'pending' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                          : client.status === 'rejected' ? 'bg-red-500/10 border-red-500/30 text-red-400'
                           : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                      }`}
-                    >
-                      <option value="active" className="bg-[#080E1E] text-emerald-400">Active (Approved)</option>
-                      <option value="pending" className="bg-[#080E1E] text-amber-400">Pending Approval</option>
-                      <option value="rejected" className="bg-[#080E1E] text-red-400">Rejected</option>
-                    </select>
-                  </TD>
-                  <TD>
-                    {client.aiAgentId ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30 text-xs font-bold" title={`Agent ID: ${client.aiAgentId}`}>
-                        Active Bot
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold">
-                        None
-                      </span>
-                    )}
-                  </TD>
-                  <TD>
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${client.whatsappPhoneNumberId ? 'text-emerald-400' : 'text-slate-500'}`}>
-                      <PhoneCall className="w-3.5 h-3.5" />
-                      {client.whatsappPhoneNumberId ? 'Connected' : 'Not Connected'}
-                    </span>
-                  </TD>
-                  <TD>
-                    <select
-                      value={client.plan}
-                      onChange={(e) => handlePlanChange(client._id, e.target.value)}
-                      className="rounded-lg border border-[#334155] bg-[#080E1E] px-2.5 py-1 text-xs font-bold text-white focus:border-[#3B82F6] focus:outline-none capitalize"
-                    >
-                      <option value="free">Free</option>
-                      <option value="starter">Starter</option>
-                      <option value="pro">Pro</option>
-                      <option value="enterprise">Enterprise</option>
-                    </select>
-                  </TD>
-                  <TD className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {client.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(client._id, 'active')}
-                            className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all"
-                            title="Approve Registration"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(client._id, 'rejected')}
-                            className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 transition-all"
-                            title="Reject Registration"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </>
+                        }`}
+                      >
+                        <option value="active" className="bg-[#080E1E] text-emerald-400">Active (Approved)</option>
+                        <option value="pending" className="bg-[#080E1E] text-amber-400">Pending Approval</option>
+                        <option value="rejected" className="bg-[#080E1E] text-red-400">Rejected</option>
+                      </select>
+                    </TD>
+                    <TD>
+                      {client.aiAgentId ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30 text-xs font-bold">
+                          Active Bot
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold">
+                          None
+                        </span>
                       )}
-                      <button
-                        onClick={() => handleAccessPanel(client)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 font-extrabold text-xs transition-all"
-                        title="Directly enter this Client's marketing workspace"
+                    </TD>
+                    <TD>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${client.whatsappPhoneNumberId ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        {client.whatsappPhoneNumberId ? 'Connected' : 'Not Connected'}
+                      </span>
+                    </TD>
+                    <TD onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={client.plan}
+                        onChange={(e) => handlePlanChange(client._id, e.target.value)}
+                        className="rounded-lg border border-[#334155] bg-[#080E1E] px-2.5 py-1 text-xs font-bold text-white focus:border-[#3B82F6] focus:outline-none capitalize"
                       >
-                        <span>Access Client Panel</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleOpenSharing(client)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-extrabold text-xs transition-all"
-                        title="Generate or view SSO / API Sharing credentials for Magnifi AI"
-                      >
-                        <Key className="w-3.5 h-3.5" />
-                        <span>API Sharing</span>
-                      </button>
-                      <button
-                        onClick={() => handleStartEdit(client)}
-                        className="p-2 rounded-xl bg-[#080E1E] hover:bg-[#3B82F6]/15 text-slate-400 hover:text-[#3B82F6] border border-[#1E293B] transition-all"
-                        title="Edit Client Details & WhatsApp API"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(client._id, client.name)}
-                        className="p-2 rounded-xl bg-[#080E1E] hover:bg-red-500/15 text-slate-400 hover:text-red-400 border border-[#1E293B] transition-all"
-                        title="Delete Client"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </TD>
-                </TR>
+                        <option value="free">Free</option>
+                        <option value="starter">Starter</option>
+                        <option value="pro">Pro</option>
+                        <option value="enterprise">Enterprise</option>
+                      </select>
+                    </TD>
+                    <TD className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        {client.status === 'pending' && (
+                          <>
+                            <button onClick={() => handleStatusChange(client._id, 'active')} className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all" title="Approve"><Check className="w-4 h-4" /></button>
+                            <button onClick={() => handleStatusChange(client._id, 'rejected')} className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 transition-all" title="Reject"><X className="w-4 h-4" /></button>
+                          </>
+                        )}
+                        <button onClick={() => handleAccessPanel(client)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 font-extrabold text-xs transition-all"><span>Access Panel</span><ExternalLink className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleOpenSharing(client)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-extrabold text-xs transition-all"><Key className="w-3.5 h-3.5" /><span>API</span></button>
+                        <button onClick={() => handleStartEdit(client)} className="p-2 rounded-xl bg-[#080E1E] hover:bg-[#3B82F6]/15 text-slate-400 hover:text-[#3B82F6] border border-[#1E293B] transition-all" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(client._id, client.name)} className="p-2 rounded-xl bg-[#080E1E] hover:bg-red-500/15 text-slate-400 hover:text-red-400 border border-[#1E293B] transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/admin/clients/${client._id}/templates`) }}
+                          className="p-2 rounded-xl bg-[#080E1E] border border-[#1E293B] text-slate-400 hover:text-[#25D366] hover:border-[#25D366]/40 transition-all text-xs font-bold"
+                          title="Manage Templates"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </TD>
+                  </TR>
+                  </Fragment>
               ))
             )}
           </TBody>

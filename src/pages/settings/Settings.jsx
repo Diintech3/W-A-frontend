@@ -10,6 +10,7 @@ export default function Settings() {
   const { user, refreshUser } = useAuth()
   const [phoneId, setPhoneId] = useState('')
   const [token, setToken] = useState('')
+  const [wabaId, setWabaId] = useState('')
   const [saving, setSaving] = useState(false)
   const [agentId, setAgentId] = useState('')
   const [savingAgent, setSavingAgent] = useState(false)
@@ -56,6 +57,7 @@ export default function Settings() {
       const { data } = await authApi.connectWhatsApp({
         whatsappPhoneNumberId: phoneId.trim(),
         whatsappAccessToken: token.trim(),
+        whatsappWabaId: wabaId.trim(),
       })
       if (data.success) {
         toast.success(data.message || 'Connected')
@@ -123,6 +125,18 @@ export default function Settings() {
             onChange={(e) => setToken(e.target.value)}
             placeholder="Never shown again after save"
           />
+          <div>
+            <Input
+              label="WhatsApp Business Account ID (WABA ID)"
+              value={wabaId}
+              onChange={(e) => setWabaId(e.target.value)}
+              placeholder="e.g. 1107299854127673"
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Meta Business Manager → WhatsApp → Settings → <span className="text-amber-400">Business Account ID</span>.
+              Required for auto-syncing templates.
+            </p>
+          </div>
           <Button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save connection'}
           </Button>

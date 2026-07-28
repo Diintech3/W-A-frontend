@@ -25,6 +25,8 @@ import ManageAdmins from './pages/superadmin/ManageAdmins'
 import ManageGlobalClients from './pages/superadmin/ManageGlobalClients'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageClients from './pages/admin/ManageClients'
+import ClientTemplates from './pages/admin/ClientTemplates'
+import CreateTemplate from './pages/admin/CreateTemplate'
 
 function ProtectedLayout() {
   const { loading, isAuthenticated, user } = useAuthContext()
@@ -146,6 +148,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: 'clients', element: <ManageClients /> },
+      { path: 'clients/:clientId/templates', element: <ClientTemplates /> },
+      { path: 'clients/:clientId/templates/new', element: <CreateTemplate /> },
     ],
   },
   {

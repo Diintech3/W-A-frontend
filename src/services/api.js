@@ -89,11 +89,22 @@ export const contactsApi = {
 }
 
 export const templatesApi = {
+  // Client: apni assigned templates
   list: () => api.get('/templates'),
   get: (id) => api.get(`/templates/${id}`),
-  create: (body) => api.post('/templates', body),
-  update: (id, body) => api.patch(`/templates/${id}`, body),
-  remove: (id) => api.delete(`/templates/${id}`),
+  // Meta verify (client bhi use kar sakta hai)
+  metaVerify: (name) => api.post('/templates/meta/verify', { name }),
+  // Admin only
+  metaList: () => api.get('/templates/meta/list'),
+  metaSync: () => api.post('/templates/meta/sync'),
+  // Admin: client ke liye template management
+  adminListClientTemplates: (clientId) => api.get(`/templates/admin/clients/${clientId}`),
+  adminCreateOnMeta: (clientId, body) => api.post(`/templates/admin/clients/${clientId}/create-on-meta`, body),
+  adminAssign: (clientId, body) => api.post(`/templates/admin/clients/${clientId}/assign`, body),
+  adminRefreshAll: (clientId) => api.post(`/templates/admin/clients/${clientId}/refresh-all`),
+  adminUpdate: (templateId, body) => api.patch(`/templates/admin/${templateId}`, body),
+  adminDelete: (templateId) => api.delete(`/templates/admin/${templateId}`),
+  adminRefreshStatus: (templateId) => api.post(`/templates/admin/${templateId}/refresh-status`),
 }
 
 export const campaignsApi = {
