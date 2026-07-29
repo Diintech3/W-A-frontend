@@ -11,7 +11,10 @@ export function getApiBase() {
 const api = axios.create({
   baseURL: getApiBase(),
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 
+    'Content-Type': 'application/json',
+    'x-api-key': import.meta.env.VITE_WHATS_AI_API_KEY || 'kasana-ai-super-secret-key-2026',
+  },
 })
 
 api.interceptors.request.use((config) => {
