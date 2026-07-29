@@ -41,7 +41,16 @@ api.interceptors.response.use(
       try {
         if (!refreshing) {
           refreshing = axios
-            .post(`${getApiBase()}/auth/refresh`, {}, { withCredentials: true })
+            .post(
+              `${getApiBase()}/auth/refresh`,
+              {},
+              {
+                withCredentials: true,
+                headers: {
+                  'x-api-key': import.meta.env.VITE_WHATS_AI_API_KEY || 'whatsai-core-master-secret-key-2026',
+                },
+              }
+            )
             .finally(() => {
               refreshing = null
             })
@@ -133,6 +142,7 @@ export const inboxApi = {
   messages: (id) => api.get(`/inbox/conversations/${id}/messages`),
   reply: (id, body) => api.post(`/inbox/conversations/${id}/reply`, body),
   assign: (id, body) => api.patch(`/inbox/conversations/${id}/assign`, body),
+  toggleAi: (id, body) => api.put(`/inbox/conversations/${id}/toggle-ai`, body),
 }
 
 export const analyticsApi = {

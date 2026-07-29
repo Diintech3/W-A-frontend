@@ -101,6 +101,20 @@ export default function Inbox() {
     }
   }
 
+  async function toggleAi() {
+    if (!activeId || !active) return
+    const newState = !active.isAIPaused
+    try {
+      const { data } = await inboxApi.toggleAi(activeId, { isAIPaused: newState })
+      if (data.success) {
+        toast.success(newState ? 'AI Paused (Manual Mode)' : 'AI Resumed (Auto Mode)')
+        loadList()
+      } else toast.error(data.message)
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Toggle failed')
+    }
+  }
+
   const active = conversations.find((c) => c._id === activeId)
 
   return (
@@ -159,21 +173,38 @@ export default function Inbox() {
           )}
           {activeId && (
             <>
-              <div className="border-b border-[#334155] px-4 py-3 flex flex-wrap gap-3 items-end">
-                <div className="flex-1 min-w-[200px]">
+              <div className="border-b border-[#334155] px-4 py-3 flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex-1 min-w-[150px]">
                   <div className="text-sm font-semibold text-[#F1F5F9]">
                     {active?.customerName || active?.customerPhone}
                   </div>
                   <div className="text-xs text-slate-500">{active?.customerPhone}</div>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Assign to agent"
-                    value={assign}
-                    onChange={(e) => setAssign(e.target.value)}
-                    className="!py-1.5 min-w-[160px]"
-                  />
-                  <Button type="button" size="sm" variant="secondary" onClick={saveAssign}>
+                <div className="flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto pb-1 max-w-full">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={toggleAi}
+                    className={`shrink-0 border-0 ${
+                      active?.isAIPaused 
+                        ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' 
+                        : 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${active?.isAIPaused ? 'bg-rose-500' : 'bg-[#25D366]'}`} />
+                      {active?.isAIPaused ? 'Manual Switch' : 'Auto Switch'}
+                    </span>
+                  </Button>
+                  <div className="w-[140px] shrink-0">
+                    <Input
+                      placeholder="Assign to agent"
+                      value={assign}
+                      onChange={(e) => setAssign(e.target.value)}
+                      className="!py-1.5"
+                    />
+                  </div>
+                  <Button type="button" size="sm" variant="secondary" className="shrink-0" onClick={saveAssign}>
                     Assign
                   </Button>
                 </div>
