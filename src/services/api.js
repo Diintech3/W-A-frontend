@@ -13,7 +13,7 @@ const api = axios.create({
   withCredentials: true,
   headers: { 
     'Content-Type': 'application/json',
-    'x-api-key': import.meta.env.VITE_WHATS_AI_API_KEY || 'kasana-ai-super-secret-key-2026',
+    'x-api-key': import.meta.env.VITE_WHATS_AI_API_KEY || 'whatsai-core-master-secret-key-2026',
   },
 })
 
