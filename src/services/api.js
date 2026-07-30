@@ -104,6 +104,7 @@ export const templatesApi = {
   // Client: apni assigned templates
   list: () => api.get('/templates'),
   get: (id) => api.get(`/templates/${id}`),
+  update: (id, body) => api.patch(`/templates/${id}`, body),
   // Meta verify (client bhi use kar sakta hai)
   metaVerify: (name) => api.post('/templates/meta/verify', { name }),
   // Admin only

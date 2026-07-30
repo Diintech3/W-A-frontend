@@ -16,6 +16,13 @@ export default function Settings() {
   const [savingAgent, setSavingAgent] = useState(false)
 
   useEffect(() => {
+    if (user) {
+      setPhoneId(user.whatsappPhoneNumberId || '')
+      setWabaId(user.whatsappWabaId || '')
+    }
+  }, [user])
+
+  useEffect(() => {
     async function fetchAgentId() {
       try {
         const { data } = await authApi.getAIAgentId()
@@ -111,12 +118,14 @@ export default function Settings() {
           settings. Webhook callback URL must point to{' '}
           <code className="text-[#34D399]">/api/webhook</code> with your verify token.
         </p>
-        <form onSubmit={connect} className="space-y-4">
+        <form onSubmit={connect} className="space-y-4" autoComplete="off">
           <Input
             label="Phone Number ID"
             value={phoneId}
             onChange={(e) => setPhoneId(e.target.value)}
             placeholder="From Meta app"
+            autoComplete="off"
+            name="whatsapp_phone_id_field"
           />
           <Input
             label="Access token"
@@ -124,6 +133,8 @@ export default function Settings() {
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder="Never shown again after save"
+            autoComplete="new-password"
+            name="whatsapp_token_field"
           />
           <div>
             <Input
@@ -131,6 +142,8 @@ export default function Settings() {
               value={wabaId}
               onChange={(e) => setWabaId(e.target.value)}
               placeholder="e.g. 1107299854127673"
+              autoComplete="off"
+              name="whatsapp_waba_id_field"
             />
             <p className="mt-1 text-xs text-slate-500">
               Meta Business Manager → WhatsApp → Settings → <span className="text-amber-400">Business Account ID</span>.

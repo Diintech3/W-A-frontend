@@ -5,8 +5,10 @@ import { Card } from '../../components/ui/Card'
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table'
 import { Loader } from '../../components/ui/Loader'
 import { TemplatePreview } from '../../components/shared/TemplatePreview'
-import { Eye, Code2, CheckCircle2, XCircle, Clock, AlertCircle, FileText } from 'lucide-react'
+import { Eye, Code2, CheckCircle2, XCircle, Clock, AlertCircle, FileText, Edit2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Modal, ModalActions } from '../../components/ui/Modal'
+import { Input } from '../../components/ui/Input'
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function MetaStatusBadge({ status }) {
@@ -31,6 +33,52 @@ export default function Templates() {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
   const [previewId, setPreviewId] = useState(null)
+  
+  const [editingTemplate, setEditingTemplate] = useState(null)
+  const [editVariables, setEditVariables] = useState([])
+  const [savingVars, setSavingVars] = useState(false)
+
+  function getTemplateVariables(t) {
+    const text = (t.headerText || '') + ' ' + (t.bodyPreview || '')
+    const matches = text.match(/\{\{(\d+)\}\}/g) || []
+    const uniqueVars = [...new Set(matches.map(m => m.replace(/[{}]/g, '')))].sort((a,b) => Number(a) - Number(b))
+    
+    const currentParams = t.sampleParams ? [...t.sampleParams] : []
+    return uniqueVars.map(varNum => {
+      const existing = currentParams.find(p => String(p.key) === String(varNum))
+      return existing || { key: String(varNum), value: '' }
+    })
+  }
+
+  function openEditVars(t) {
+    setEditingTemplate(t)
+    setEditVariables(getTemplateVariables(t))
+  }
+
+  function handleVarChange(index, val) {
+    const updated = [...editVariables]
+    updated[index].value = val
+    setEditVariables(updated)
+  }
+
+  async function saveVariables() {
+    if (!editingTemplate) return
+    setSavingVars(true)
+    try {
+      const { data } = await templatesApi.update(editingTemplate._id, { sampleParams: editVariables })
+      if (data.success) {
+        toast.success('Variables updated successfully')
+        setEditingTemplate(null)
+        load()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to update variables')
+    } finally {
+      setSavingVars(false)
+    }
+  }
 
   async function load() {
     setLoading(true)
@@ -79,7 +127,9 @@ export default function Templates() {
                   </TR>
                 </THead>
                 <TBody>
-                  {list.map((t) => (
+                  {list.map((t) => {
+                    const vars = getTemplateVariables(t)
+                    return (
                     <TR key={t._id} className="hover:bg-slate-800/50 transition">
                       <TD className="font-medium text-slate-100">{t.name}</TD>
                       <TD>
@@ -95,24 +145,36 @@ export default function Templates() {
                       <TD>
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <Code2 className="h-3.5 w-3.5 text-slate-500" />
-                          {t.sampleParams?.length > 0 ? `${t.sampleParams.length} Params` : 'None'}
+                          {vars.length > 0 ? `${vars.length} Params` : 'None'}
                         </span>
                       </TD>
                       <TD>
                         <MetaStatusBadge status={t.metaStatus || 'DRAFT'} />
                       </TD>
                       <TD className="text-right">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={previewId === t._id ? 'primary' : 'ghost'}
-                          onClick={() => setPreviewId(previewId === t._id ? null : t._id)}
-                        >
-                          <Eye className="h-3.5 w-3.5 mr-1" /> Preview
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={vars.length === 0}
+                            onClick={() => openEditVars(t)}
+                            title={vars.length === 0 ? "This template has no variables" : "Edit Variables"}
+                          >
+                            <Edit2 className="h-3.5 w-3.5 mr-1" /> Variables
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={previewId === t._id ? 'primary' : 'ghost'}
+                            onClick={() => setPreviewId(previewId === t._id ? null : t._id)}
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" /> Preview
+                          </Button>
+                        </div>
                       </TD>
                     </TR>
-                  ))}
+                  )})}
                   {!list.length && (
                     <TR>
                       <TD colSpan={6} className="text-center py-12 text-slate-500">
@@ -154,6 +216,41 @@ export default function Templates() {
           </div>
         )}
       </div>
+      {/* Modal for editing variables */}
+      <Modal
+        open={!!editingTemplate}
+        title={`Edit Variables: ${editingTemplate?.name}`}
+        onClose={() => setEditingTemplate(null)}
+        footer={
+          <ModalActions
+            onCancel={() => setEditingTemplate(null)}
+            onConfirm={saveVariables}
+            loading={savingVars}
+            confirmLabel="Save Variables"
+          />
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Set default values for template variables. These will be used when sending campaigns if not overridden.
+          </p>
+          {editVariables.length === 0 ? (
+            <div className="rounded-lg bg-slate-800/50 p-4 text-center text-sm text-slate-400 border border-slate-700">
+              This template does not contain any variables.
+            </div>
+          ) : (
+            editVariables.map((v, i) => (
+              <Input
+                key={i}
+                label={`Variable {{${v.key}}}`}
+                value={v.value}
+                onChange={(e) => handleVarChange(i, e.target.value)}
+                placeholder="e.g. name, fallback text"
+              />
+            ))
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
