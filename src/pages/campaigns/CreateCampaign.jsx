@@ -21,6 +21,8 @@ export default function CreateCampaign() {
   const [scheduledAt, setScheduledAt] = useState('')
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [expandedTemplates, setExpandedTemplates] = useState({})
 
   const selectedTemplate = templates.find((t) => t._id === templateId)
 
@@ -140,22 +142,72 @@ export default function CreateCampaign() {
               </p>
             )}
           </label>
-          <label className="block w-full">
-            <span className="mb-1 block text-sm font-medium text-slate-300">Template</span>
-            <select
-              className="w-full rounded-lg border border-[#334155] bg-[#0F172A] px-3 py-2 text-[#F1F5F9]"
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              required
+          <div className="relative w-full">
+            <span className="mb-1 block text-sm font-medium text-slate-300">Template *</span>
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex w-full items-center justify-between rounded-lg border border-[#334155] bg-[#0F172A] px-3 py-2 text-left text-[#F1F5F9] focus:border-[#25D366] focus:outline-none text-sm"
             >
-              <option value="">Select template</option>
-              {templates.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <span>{selectedTemplate ? selectedTemplate.name : 'Select template...'}</span>
+              <span className="text-xs text-slate-400">▼</span>
+            </button>
+            
+            {isOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+                <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-[#334155] bg-[#1E293B] shadow-xl">
+                  {templates.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-400">No templates found</div>
+                  ) : (
+                    templates.map((t) => {
+                      const isSelected = t._id === templateId;
+                      const hasLongPreview = t.bodyPreview && (t.bodyPreview.length > 150 || t.bodyPreview.split('\n').length > 4);
+                      return (
+                        <div
+                          key={t._id}
+                          onClick={() => {
+                            setTemplateId(t._id);
+                            setIsOpen(false);
+                          }}
+                          className={`w-full p-3 text-left border-b border-[#334155] last:border-b-0 hover:bg-[#334155] transition-colors flex flex-col gap-1.5 cursor-pointer ${
+                            isSelected ? 'bg-[#1e3a2b] border-l-4 border-l-[#25D366]' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-semibold text-sm text-[#F1F5F9]">{t.name}</span>
+                            <span className="text-xs text-slate-400 uppercase font-medium bg-[#334155] px-1.5 py-0.5 rounded">{t.languageCode}</span>
+                          </div>
+                          <div className="text-xs text-slate-300 w-full">
+                            <p className={`whitespace-pre-wrap leading-relaxed ${
+                              expandedTemplates[t._id] ? '' : 'line-clamp-4'
+                            }`}>
+                              {t.bodyPreview || 'No body preview.'}
+                            </p>
+                            {hasLongPreview && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedTemplates(prev => ({
+                                    ...prev,
+                                    [t._id]: !prev[t._id]
+                                  }));
+                                }}
+                                className="mt-1 text-[#25D366] hover:underline font-semibold block"
+                              >
+                                {expandedTemplates[t._id] ? 'Show less' : 'Read more'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           <label className="block w-full">
             <span className="mb-1 block text-sm font-medium text-slate-300">Link to Photoshare Folder (Optional)</span>
             <select
