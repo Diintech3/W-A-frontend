@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { campaignsApi, contactsApi, templatesApi } from '../../services/api'
+import { campaignsApi, contactsApi, templatesApi, photoshareApi } from '../../services/api'
 import { Card } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
@@ -13,9 +13,11 @@ export default function CreateCampaign() {
   const { socket } = useSocket()
   const [groups, setGroups] = useState([])
   const [templates, setTemplates] = useState([])
+  const [folders, setFolders] = useState([])
   const [name, setName] = useState('')
   const [targetGroup, setTargetGroup] = useState('')
   const [templateId, setTemplateId] = useState('')
+  const [photoshareFolderId, setPhotoshareFolderId] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(null)
@@ -25,9 +27,14 @@ export default function CreateCampaign() {
   useEffect(() => {
     async function load() {
       try {
-        const [g, t] = await Promise.all([contactsApi.groups(), templatesApi.list()])
+        const [g, t, f] = await Promise.all([
+          contactsApi.groups(),
+          templatesApi.list(),
+          photoshareApi.listFolders()
+        ])
         if (g.data.success) setGroups(g.data.data.groups || [])
         if (t.data.success) setTemplates(t.data.data.templates || [])
+        if (f.data.success) setFolders(f.data.data.folders || [])
       } catch (e) {
         toast.error(e.response?.data?.message || 'Failed to load form data')
       }
@@ -56,6 +63,7 @@ export default function CreateCampaign() {
         name,
         targetGroup,
         template: templateId,
+        photoshareFolderId: photoshareFolderId || undefined,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       }
       const { data } = await campaignsApi.create(body)
@@ -144,6 +152,21 @@ export default function CreateCampaign() {
               {templates.map((t) => (
                 <option key={t._id} value={t._id}>
                   {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block w-full">
+            <span className="mb-1 block text-sm font-medium text-slate-300">Link to Photoshare Folder (Optional)</span>
+            <select
+              className="w-full rounded-lg border border-[#334155] bg-[#0F172A] px-3 py-2 text-[#F1F5F9]"
+              value={photoshareFolderId}
+              onChange={(e) => setPhotoshareFolderId(e.target.value)}
+            >
+              <option value="">None — Do not link to any folder</option>
+              {folders.map((f) => (
+                <option key={f._id} value={f._id}>
+                  {f.name} {f.isActive ? '(Active)' : ''}
                 </option>
               ))}
             </select>

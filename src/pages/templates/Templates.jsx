@@ -44,10 +44,17 @@ export default function Templates() {
     const uniqueVars = [...new Set(matches.map(m => m.replace(/[{}]/g, '')))].sort((a,b) => Number(a) - Number(b))
     
     const currentParams = t.sampleParams ? [...t.sampleParams] : []
-    return uniqueVars.map(varNum => {
+    const variables = uniqueVars.map(varNum => {
       const existing = currentParams.find(p => String(p.key) === String(varNum))
       return existing || { key: String(varNum), value: '' }
     })
+
+    if (t.headerType === 'IMAGE') {
+      const existingHeader = currentParams.find(p => p.key === 'header_image')
+      variables.unshift(existingHeader || { key: 'header_image', value: '' })
+    }
+
+    return variables;
   }
 
   function openEditVars(t) {
@@ -242,10 +249,10 @@ export default function Templates() {
             editVariables.map((v, i) => (
               <Input
                 key={i}
-                label={`Variable {{${v.key}}}`}
+                label={v.key === 'header_image' ? 'Header Image URL (link)' : `Variable {{${v.key}}}`}
                 value={v.value}
                 onChange={(e) => handleVarChange(i, e.target.value)}
-                placeholder="e.g. name, fallback text"
+                placeholder={v.key === 'header_image' ? 'e.g. https://domain.com/banner.png' : 'e.g. name, fallback text'}
               />
             ))
           )}

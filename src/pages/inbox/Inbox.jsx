@@ -225,7 +225,21 @@ export default function Inbox() {
                             : 'bg-[#1E293B] text-[#F1F5F9] border border-[#334155]'
                         }`}
                       >
-                        <p>{m.body}</p>
+                        {m.type === 'image' && m.mediaUrl ? (
+                          <div className="space-y-1">
+                            <img
+                              src={m.mediaUrl}
+                              alt="media"
+                              className="max-w-[240px] max-h-[240px] rounded-lg object-cover cursor-pointer hover:opacity-90 border border-slate-700/60"
+                              onClick={() => window.open(m.mediaUrl, '_blank')}
+                            />
+                            {m.body && m.body !== '[image]' && (
+                              <p className="text-slate-200 mt-1">{m.body}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p>{m.body}</p>
+                        )}
                         <p className="text-[10px] text-slate-500 mt-1">
                           {format(new Date(m.createdAt), 'HH:mm')} · {m.status}
                         </p>

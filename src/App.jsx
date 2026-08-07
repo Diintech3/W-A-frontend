@@ -19,6 +19,8 @@ import BotFlow from './pages/chatbot/BotFlow'
 import Inbox from './pages/inbox/Inbox'
 import Analytics from './pages/analytics/Analytics'
 import Settings from './pages/settings/Settings'
+import Photoshare from './pages/photoshare/Photoshare'
+import PublicGallery from './pages/photoshare/PublicGallery'
 
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
 import ManageAdmins from './pages/superadmin/ManageAdmins'
@@ -166,7 +168,12 @@ const router = createBrowserRouter([
       { path: 'templates', element: <Templates /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'settings', element: <Settings /> },
+      { path: 'photoshare', element: <Photoshare /> },
     ],
+  },
+  {
+    path: '/gallery/:linkCode',
+    element: <PublicGallery />,
   },
 ])
 

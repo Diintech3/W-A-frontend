@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   LogOut,
+  Camera,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
@@ -22,6 +23,7 @@ const links = [
   { to: '/inbox', label: 'Inbox', icon: MessageCircle },
   { to: '/chatbot', label: 'Chatbot', icon: Bot },
   { to: '/templates', label: 'Templates', icon: FileText },
+  { to: '/photoshare', label: 'Photoshare', icon: Camera },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]

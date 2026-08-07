@@ -177,4 +177,19 @@ export const adminApi = {
   revokeClientApiSharing: (id) => api.delete(`/admin/clients/${id}/api-sharing`),
 }
 
+export const photoshareApi = {
+  createFolder: (body) => api.post('/photoshare/folders', body),
+  listFolders: () => api.get('/photoshare/folders'),
+  getFolderDetails: (id) => api.get(`/photoshare/folders/${id}`),
+  updateFolder: (id, body) => api.patch(`/photoshare/folders/${id}`, body),
+  deleteFolder: (id) => api.delete(`/photoshare/folders/${id}`),
+  getFolderPhotos: (id) => api.get(`/photoshare/folders/${id}/photos`),
+  getPublicFolderDetails: (linkCode) => api.get(`/photoshare/public/folders/${linkCode}`),
+  getPublicFolderPhotos: (linkCode) => api.get(`/photoshare/public/folders/${linkCode}/photos`),
+  searchPhotosBySelfie: (linkCode, formData) =>
+    api.post(`/photoshare/public/folders/${linkCode}/selfie-search`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+}
+
 export default api
