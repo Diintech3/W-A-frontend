@@ -42,6 +42,7 @@ export default function Photoshare() {
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [folderPhotos, setFolderPhotos] = useState([])
+  const [expandedSender, setExpandedSender] = useState(null)
   const [loadingPhotos, setLoadingPhotos] = useState(false)
   const [analytics, setAnalytics] = useState(null)
 
@@ -247,6 +248,19 @@ export default function Photoshare() {
     setSelectedFolderId(id)
     loadFolderDetails(id)
   }
+
+  const groupedPhotos = folderPhotos.reduce((acc, photo) => {
+    const senderKey = photo.senderPhone || 'Anonymous'
+    if (!acc[senderKey]) {
+      acc[senderKey] = {
+        senderName: photo.senderName || 'Anonymous',
+        senderPhone: photo.senderPhone,
+        photos: []
+      }
+    }
+    acc[senderKey].photos.push(photo)
+    return acc
+  }, {})
 
   return (
     <div className="space-y-6">
@@ -539,69 +553,87 @@ export default function Photoshare() {
                     No photos uploaded yet for this event. Send the WhatsApp trigger link to guests to collect photos!
                   </Card>
                 ) : (
-                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 max-h-[50vh] overflow-y-auto pr-1">
-                    {folderPhotos.map((photo) => (
-                      <Card
-                        key={photo._id}
-                        className={`overflow-hidden border relative flex flex-col bg-slate-900/50 ${
-                          photo.isValid ? 'border-slate-800' : 'border-red-500/40 bg-red-950/10'
-                        }`}
-                      >
-                        {/* Image element */}
-                        <div className="aspect-square bg-slate-950 relative overflow-hidden group">
-                          {photo.isValid ? (
-                            <img
-                              src={photo.photoUrl}
-                              alt={photo.senderName}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                              onError={(e) => {
-                                e.target.src = 'https://placehold.co/300x300?text=Load+Error';
-                              }}
-                            />
-                          ) : (
-                            <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center bg-red-950/20 text-red-400">
-                              <Info className="h-8 w-8 mb-2" />
-                              <span className="text-xs font-semibold">Flagged by AI</span>
-                              <span className="text-[10px] text-slate-400 mt-1 line-clamp-3">
-                                {photo.moderationReason || 'Inappropriate content'}
-                              </span>
+              {/* PHOTOS GROUPED BY GUEST ACCORDION */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-slate-200 flex items-center justify-between">
+                  <span>Uploaded Photos ({folderPhotos.length} photos from {Object.keys(groupedPhotos).length} guests)</span>
+                  {loadingPhotos && <span className="text-xs text-slate-500 font-normal">Refreshing...</span>}
+                </h3>
+
+                {loadingPhotos && folderPhotos.length === 0 ? (
+                  <div className="flex justify-center p-12"><Loader label="Loading photos..." /></div>
+                ) : folderPhotos.length === 0 ? (
+                  <Card className="p-16 text-center text-slate-500 border border-[#334155] bg-[#1E293B]/10">
+                    No photos uploaded yet for this event. Send the WhatsApp trigger link to guests to collect photos!
+                  </Card>
+                ) : (
+                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    {Object.values(groupedPhotos).map((group) => {
+                      const isExpanded = expandedSender === group.senderPhone;
+                      return (
+                        <Card key={group.senderPhone} className="p-3 border border-[#334155] bg-slate-900/30">
+                          <div 
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => setExpandedSender(isExpanded ? null : group.senderPhone)}
+                          >
+                            <div className="space-y-0.5">
+                              <div className="font-semibold text-slate-200 flex items-center gap-2">
+                                <UserCheck className="h-4 w-4 text-[#25D366]" />
+                                <span>{group.senderName || 'Anonymous'}</span>
+                              </div>
+                              <div className="text-xs text-slate-400 font-mono">
+                                {group.senderPhone}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="info">{group.photos.length} Photos</Badge>
+                              <span className="text-slate-500 text-xs">{isExpanded ? '▼' : '►'}</span>
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 pt-3 border-t border-[#334155]/60">
+                              {group.photos.map((photo) => (
+                                <Card 
+                                  key={photo._id} 
+                                  className={`overflow-hidden border relative aspect-square flex flex-col bg-slate-950/80 group ${
+                                    photo.isValid ? 'border-slate-800' : 'border-red-500/30'
+                                  }`}
+                                >
+                                  {photo.isValid ? (
+                                    <img
+                                      src={photo.photoUrl}
+                                      alt="Uploaded"
+                                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                      onError={(e) => {
+                                        e.target.src = 'https://placehold.co/300x300?text=Load+Error';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full flex flex-col items-center justify-center p-2 text-center bg-red-950/20 text-red-400">
+                                      <Info className="h-5 w-5 mb-1" />
+                                      <span className="text-[10px] font-semibold">Flagged</span>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="absolute top-1 left-1">
+                                    <Badge variant={photo.isValid ? 'success' : 'neutral'} className="text-[8px] px-1 py-0">
+                                      {photo.isValid ? 'Approved' : 'Blocked'}
+                                    </Badge>
+                                  </div>
+
+                                  {photo.caption && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1.5 text-[10px] text-slate-200 truncate italic">
+                                      "{photo.caption}"
+                                    </div>
+                                  )}
+                                </Card>
+                              ))}
                             </div>
                           )}
-                          
-                          {/* Badge Status */}
-                          <div className="absolute top-2 left-2">
-                            <Badge variant={photo.isValid ? 'success' : 'neutral'}>
-                              {photo.isValid ? 'Approved' : 'Blocked'}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {/* Contributor metadata details */}
-                        <div className="p-3 text-xs space-y-1 flex-1 flex flex-col justify-between">
-                          <div>
-                            <div className="flex items-center gap-1.5 text-slate-200 font-semibold truncate">
-                              <UserCheck className="h-3.5 w-3.5 text-slate-400" />
-                              <span>{photo.senderName || 'Anonymous'}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-400 font-mono mt-0.5">
-                              <Phone className="h-3.5 w-3.5 text-slate-500" />
-                              <span>{photo.senderPhone}</span>
-                            </div>
-                            
-                            {photo.caption && (
-                              <div className="flex items-start gap-1 text-slate-300 mt-2 bg-slate-800/40 p-1.5 rounded border border-slate-700">
-                                <MessageSquare className="h-3.5 w-3.5 text-[#25D366] shrink-0 mt-0.5" />
-                                <span className="italic line-clamp-2">"{photo.caption}"</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="text-[10px] text-slate-500 text-right pt-2">
-                            {new Date(photo.createdAt).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
