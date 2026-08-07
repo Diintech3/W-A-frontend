@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Sparkles,
   Info,
+  Edit2,
 } from 'lucide-react'
 
 export default function Photoshare() {
@@ -37,6 +38,7 @@ export default function Photoshare() {
 
   // Modal State
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [editingFolderId, setEditingFolderId] = useState(null)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [folderPhotos, setFolderPhotos] = useState([])
@@ -121,9 +123,43 @@ export default function Photoshare() {
     localStorage.setItem('whatsai_bot_phone_number', cleaned)
   }
 
-  // Create Folder
+  // Helper to format ISO to datetime-local format (YYYY-MM-DDTHH:MM)
+  function formatDateTimeLocal(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const offset = d.getTimezoneOffset() * 60000;
+    const local = new Date(d.getTime() - offset);
+    return local.toISOString().slice(0, 16);
+  }
+
+  // Open Edit Modal
+  function handleOpenEditModal(folder) {
+    setEditingFolderId(folder._id)
+    setForm({
+      name: folder.name,
+      startTime: formatDateTimeLocal(folder.startTime),
+      endTime: formatDateTimeLocal(folder.endTime),
+      isActive: folder.isActive,
+    })
+    setCreateModalOpen(true)
+  }
+
+  // Open Create Modal
+  function handleOpenCreateModal() {
+    setEditingFolderId(null)
+    setForm({ name: '', startTime: '', endTime: '', isActive: true })
+    setCreateModalOpen(true)
+  }
+
+  // Create / Update Folder
   async function handleCreateFolder(e) {
     e.preventDefault()
+    if (!form.name.trim()) {
+      toast.error('Folder name is required')
+      return
+    }
+
     setSaving(true)
     try {
       const payload = {
@@ -132,17 +168,32 @@ export default function Photoshare() {
         endTime: form.endTime || null,
         isActive: form.isActive,
       }
-      const res = await photoshareApi.createFolder(payload)
+      
+      let res;
+      if (editingFolderId) {
+        res = await photoshareApi.updateFolder(editingFolderId, payload)
+      } else {
+        res = await photoshareApi.createFolder(payload)
+      }
+
       if (res.data?.success) {
-        toast.success(res.data?.message || 'Folder created successfully')
+        toast.success(res.data?.message || (editingFolderId ? 'Folder updated successfully' : 'Folder created successfully'))
         setCreateModalOpen(false)
         setForm({ name: '', startTime: '', endTime: '', isActive: true })
+        setEditingFolderId(null)
         loadFolders()
+        if (editingFolderId === selectedFolderId) {
+          // Refresh details of currently selected folder
+          const detailsRes = await photoshareApi.getFolderDetails(selectedFolderId)
+          if (detailsRes.data?.success) {
+            setSelectedFolder(detailsRes.data.data.folder)
+          }
+        }
       } else {
         toast.error(res.data?.message)
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create folder')
+      toast.error(err.response?.data?.message || 'Failed to save folder')
     } finally {
       setSaving(false)
     }
@@ -208,7 +259,7 @@ export default function Photoshare() {
           <p className="text-sm text-slate-400">Collect event photos via WhatsApp, moderate with AI, and share public galleries.</p>
         </div>
         <Button
-          onClick={() => setCreateModalOpen(true)}
+          onClick={handleOpenCreateModal}
           className="bg-[#25D366] text-[#0F172A] hover:bg-[#20ba59] font-bold flex items-center gap-2"
         >
           <FolderPlus className="h-5 w-5" /> New Event Folder
@@ -321,6 +372,13 @@ export default function Photoshare() {
                         className="p-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:text-white"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditModal(f)}
+                        title="Edit Folder Details"
+                        className="p-1.5 rounded-lg border border-[#334155] text-sky-400 hover:bg-[#334155] hover:text-white"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteFolder(f._id)}
@@ -554,8 +612,8 @@ export default function Photoshare() {
 
       </div>
 
-      {/* CREATE FOLDER MODAL */}
-      <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create Event Folder">
+      {/* CREATE / EDIT FOLDER MODAL */}
+      <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title={editingFolderId ? 'Edit Event Folder' : 'Create Event Folder'}>
         <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
           <Input
             label="Folder / Event Name"
@@ -605,7 +663,7 @@ export default function Photoshare() {
               className="bg-[#25D366] text-[#0F172A] hover:bg-[#20ba59] font-bold"
               disabled={saving}
             >
-              {saving ? 'Creating...' : 'Create Folder'}
+              {editingFolderId ? (saving ? 'Saving...' : 'Save Changes') : (saving ? 'Creating...' : 'Create Folder')}
             </Button>
           </div>
         </form>
