@@ -539,20 +539,6 @@ export default function Photoshare() {
                 </Card>
               )}
 
-              {/* PHOTOS GRID */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-slate-200 flex items-center justify-between">
-                  <span>Uploaded Photos ({folderPhotos.length})</span>
-                  {loadingPhotos && <span className="text-xs text-slate-500 font-normal">Refreshing...</span>}
-                </h3>
-
-                {loadingPhotos && folderPhotos.length === 0 ? (
-                  <div className="flex justify-center p-12"><Loader label="Loading photos..." /></div>
-                ) : folderPhotos.length === 0 ? (
-                  <Card className="p-16 text-center text-slate-500 border border-[#334155] bg-[#1E293B]/10">
-                    No photos uploaded yet for this event. Send the WhatsApp trigger link to guests to collect photos!
-                  </Card>
-                ) : (
               {/* PHOTOS GROUPED BY GUEST ACCORDION */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-slate-200 flex items-center justify-between">
