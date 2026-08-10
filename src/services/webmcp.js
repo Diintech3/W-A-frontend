@@ -1,7 +1,15 @@
 import { campaignsApi, templatesApi, contactsApi, analyticsApi } from './api';
 
 export function initializeWebMCP() {
-  const context = window.modelContext || document.modelContext || navigator.modelContext;
+  let context = null;
+  if (typeof window !== 'undefined' && window.modelContext) {
+    context = window.modelContext;
+  } else if (typeof document !== 'undefined' && document.modelContext) {
+    context = document.modelContext;
+  } else if (typeof navigator !== 'undefined' && navigator.modelContext) {
+    context = navigator.modelContext;
+  }
+
   if (!context) {
     console.log("WebMCP not supported in this browser environment.");
     return;
