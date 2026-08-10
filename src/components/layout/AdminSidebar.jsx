@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, Shield, Terminal, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Shield, Terminal, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 const links = [
   { to: '/admin', label: 'Admin Overview', icon: LayoutDashboard },
   { to: '/admin/clients', label: 'My Client Accounts', icon: Users },
+  { to: '/admin/settings', label: 'API Settings', icon: Settings },
 ]
 
 export function AdminSidebar() {

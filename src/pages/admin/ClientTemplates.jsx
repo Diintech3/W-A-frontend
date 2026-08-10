@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle2, Clock, XCircle, AlertCircle, FileText, Refresh
 
 function MetaStatusBadge({ status }) {
   const config = {
+    PENDING_ADMIN_APPROVAL: { color: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30', icon: Clock, label: 'Awaiting Admin' },
     APPROVED: { color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: CheckCircle2, label: 'Approved' },
     PENDING:  { color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Clock, label: 'Pending' },
     REJECTED: { color: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle, label: 'Rejected' },
@@ -34,6 +35,7 @@ export default function ClientTemplates() {
   const [refreshing, setRefreshing] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [previewTemplateId, setPreviewTemplateId] = useState(null)
+  const [submittingId, setSubmittingId] = useState(null)
   
 
 
@@ -91,6 +93,24 @@ export default function ClientTemplates() {
       toast.error(e.response?.data?.message || 'Delete failed')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleSubmitToMeta = async (templateId) => {
+    if (!window.confirm('Are you sure you want to approve this template and register it on Meta Graph API?')) return
+    setSubmittingId(templateId)
+    try {
+      const { data } = await templatesApi.adminApproveAndSubmit(templateId)
+      if (data.success) {
+        toast.success(data.message || 'Template successfully submitted to Meta!')
+        loadData()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Submission failed')
+    } finally {
+      setSubmittingId(null)
     }
   }
 
@@ -175,6 +195,16 @@ export default function ClientTemplates() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {tmpl.metaStatus === 'PENDING_ADMIN_APPROVAL' && (
+                            <button
+                              onClick={() => handleSubmitToMeta(tmpl._id)}
+                              disabled={submittingId === tmpl._id}
+                              className="p-2 rounded-xl bg-[#0A1122] border border-[#1E293B] hover:border-emerald-500/30 hover:bg-emerald-500/15 text-slate-400 hover:text-emerald-400 transition-all disabled:opacity-50"
+                              title="Approve & Submit to Meta"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => setPreviewTemplateId(previewTemplateId === tmpl._id ? null : tmpl._id)}
                             className={`p-2 rounded-xl border transition-all ${

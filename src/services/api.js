@@ -104,7 +104,9 @@ export const templatesApi = {
   // Client: apni assigned templates
   list: () => api.get('/templates'),
   get: (id) => api.get(`/templates/${id}`),
+  create: (body) => api.post('/templates', body),
   update: (id, body) => api.patch(`/templates/${id}`, body),
+  remove: (id) => api.delete(`/templates/${id}`),
   // Meta verify (client bhi use kar sakta hai)
   metaVerify: (name) => api.post('/templates/meta/verify', { name }),
   // Admin only
@@ -118,6 +120,7 @@ export const templatesApi = {
   adminUpdate: (templateId, body) => api.patch(`/templates/admin/${templateId}`, body),
   adminDelete: (templateId) => api.delete(`/templates/admin/${templateId}`),
   adminRefreshStatus: (templateId) => api.post(`/templates/admin/${templateId}/refresh-status`),
+  adminApproveAndSubmit: (templateId) => api.post(`/templates/admin/${templateId}/approve-and-submit`),
 }
 
 export const campaignsApi = {
@@ -175,6 +178,8 @@ export const adminApi = {
   deleteClient: (id) => api.delete(`/admin/clients/${id}`),
   generateClientApiSharing: (id) => api.post(`/admin/clients/${id}/api-sharing`),
   revokeClientApiSharing: (id) => api.delete(`/admin/clients/${id}/api-sharing`),
+  generateSelfSharing: () => api.post('/admin/self-api-sharing'),
+  revokeSelfSharing: () => api.delete('/admin/self-api-sharing'),
 }
 
 export const photoshareApi = {

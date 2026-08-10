@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ShieldCheck, Users, ShieldAlert, Terminal, LogOut } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, Users, ShieldAlert, Terminal, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 const links = [
   { to: '/superadmin', label: 'Platform Overview', icon: LayoutDashboard },
   { to: '/superadmin/admins', label: 'Admin Accounts', icon: ShieldCheck },
   { to: '/superadmin/clients', label: 'Global Client Accounts', icon: Users },
+  { to: '/superadmin/settings', label: 'Platform Settings', icon: Settings },
 ]
 
 export function SuperAdminSidebar() {

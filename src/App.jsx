@@ -142,6 +142,7 @@ const router = createBrowserRouter([
       { index: true, element: <SuperAdminDashboard /> },
       { path: 'admins', element: <ManageAdmins /> },
       { path: 'clients', element: <ManageGlobalClients /> },
+      { path: 'settings', element: <Settings /> },
     ],
   },
   {
@@ -152,6 +153,7 @@ const router = createBrowserRouter([
       { path: 'clients', element: <ManageClients /> },
       { path: 'clients/:clientId/templates', element: <ClientTemplates /> },
       { path: 'clients/:clientId/templates/new', element: <CreateTemplate /> },
+      { path: 'settings', element: <Settings /> },
     ],
   },
   {
