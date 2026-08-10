@@ -4,6 +4,10 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/shared/ErrorBoundary.jsx'
+import { initializeWebMCP } from './services/webmcp'
+
+// Initialize WebMCP tools
+initializeWebMCP()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
