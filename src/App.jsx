@@ -14,6 +14,9 @@ import Contacts from './pages/contacts/Contacts'
 import ContactGroups from './pages/contacts/ContactGroups'
 import Campaigns from './pages/campaigns/Campaigns'
 import CreateCampaign from './pages/campaigns/CreateCampaign'
+import DripCampaignList from './pages/drip/DripCampaignList'
+import DripCampaignWizard from './pages/drip/DripCampaignWizard'
+import DripCampaignDetail from './pages/drip/DripCampaignDetail'
 import Templates from './pages/templates/Templates'
 import BotFlow from './pages/chatbot/BotFlow'
 import Inbox from './pages/inbox/Inbox'
@@ -163,6 +166,9 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: 'campaigns', element: <Campaigns /> },
       { path: 'campaigns/new', element: <CreateCampaign /> },
+      { path: 'drip-campaigns', element: <DripCampaignList /> },
+      { path: 'drip-campaigns/new', element: <DripCampaignWizard /> },
+      { path: 'drip-campaigns/:id', element: <DripCampaignDetail /> },
       { path: 'contacts', element: <Contacts /> },
       { path: 'contacts/groups', element: <ContactGroups /> },
       { path: 'inbox', element: <Inbox /> },

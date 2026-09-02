@@ -108,9 +108,26 @@ export default function ClientTemplates() {
         toast.error(data.message)
       }
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Submission failed')
+      const msg = e.response?.data?.message || ''
+      if (msg.includes('OAuth') || msg.includes('token') || msg.includes('access token')) {
+        toast.error('Meta WhatsApp Access Token is expired or invalid in Settings. You can click the "✓ Direct Approve" button to approve locally!', { duration: 6000 })
+      } else {
+        toast.error(msg || 'Submission to Meta failed')
+      }
     } finally {
       setSubmittingId(null)
+    }
+  }
+
+  const handleDirectApprove = async (templateId) => {
+    try {
+      const { data } = await templatesApi.adminDirectApprove(templateId)
+      if (data.success) {
+        toast.success('Template directly approved!')
+        loadData()
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Approval failed')
     }
   }
 
@@ -178,7 +195,19 @@ export default function ClientTemplates() {
                     <tr className="bg-[#080E1E] hover:bg-[#0A1122] transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-200">{tmpl.name}</span>
+                          <span className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            {tmpl.name}
+                            {tmpl.headerType === 'IMAGE' && (
+                              <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                📸 IMAGE
+                              </span>
+                            )}
+                            {tmpl.buttons && tmpl.buttons.length > 0 && (
+                              <span className="text-[10px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">
+                                🔘 {tmpl.buttons.length} CTA
+                              </span>
+                            )}
+                          </span>
                           <span className="text-xs font-mono text-[#25D366] mt-0.5">{tmpl.whatsappTemplateName}</span>
                         </div>
                       </td>
@@ -200,7 +229,7 @@ export default function ClientTemplates() {
                               onClick={() => handleSubmitToMeta(tmpl._id)}
                               disabled={submittingId === tmpl._id}
                               className="p-2 rounded-xl bg-[#0A1122] border border-[#1E293B] hover:border-emerald-500/30 hover:bg-emerald-500/15 text-slate-400 hover:text-emerald-400 transition-all disabled:opacity-50"
-                              title="Approve & Submit to Meta"
+                              title="Submit to Meta Graph API for Approval"
                             >
                               <Send className="w-4 h-4" />
                             </button>
@@ -247,6 +276,11 @@ export default function ClientTemplates() {
                               bodyPreview={tmpl.bodyPreview}
                               languageCode={tmpl.languageCode}
                               whatsappTemplateName={tmpl.whatsappTemplateName}
+                              headerType={tmpl.headerType}
+                              headerText={tmpl.headerText}
+                              mediaUrl={tmpl.mediaUrl}
+                              footerText={tmpl.footerText}
+                              buttons={tmpl.buttons}
                             />
                           </div>
                         </td>

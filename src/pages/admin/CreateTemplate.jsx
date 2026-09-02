@@ -75,7 +75,7 @@ export default function CreateTemplate() {
   const fetchMetaTemplatesList = async () => {
     setLoadingMeta(true)
     try {
-      const { data } = await templatesApi.metaList()
+      const { data } = await templatesApi.metaList(clientId)
       if (data.success) {
         setMetaTemplates(data.data.templates || [])
       }
@@ -126,7 +126,7 @@ export default function CreateTemplate() {
     verifyTimer.current = setTimeout(async () => {
       setVerifying(true)
       try {
-        const { data } = await templatesApi.metaVerify(val.trim())
+        const { data } = await templatesApi.metaVerify(val.trim(), clientId)
         if (data.success) setVerifyResult(data.data)
       } catch { /* ignore */ }
       finally { setVerifying(false) }

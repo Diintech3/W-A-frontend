@@ -106,12 +106,17 @@ export const templatesApi = {
   get: (id) => api.get(`/templates/${id}`),
   create: (body) => api.post('/templates', body),
   update: (id, body) => api.patch(`/templates/${id}`, body),
+  uploadMedia: (formData) =>
+    api.post('/templates/upload-media', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  submitToAdmin: (id) => api.post(`/templates/${id}/submit-to-admin`),
   remove: (id) => api.delete(`/templates/${id}`),
   // Meta verify (client bhi use kar sakta hai)
-  metaVerify: (name) => api.post('/templates/meta/verify', { name }),
+  metaVerify: (name, clientId) => api.post('/templates/meta/verify', { name, clientId }),
   // Admin only
-  metaList: () => api.get('/templates/meta/list'),
-  metaSync: () => api.post('/templates/meta/sync'),
+  metaList: (clientId) => api.get('/templates/meta/list', { params: { clientId } }),
+  metaSync: (clientId) => api.post('/templates/meta/sync', { clientId }),
   // Admin: client ke liye template management
   adminListClientTemplates: (clientId) => api.get(`/templates/admin/clients/${clientId}`),
   adminCreateOnMeta: (clientId, body) => api.post(`/templates/admin/clients/${clientId}/create-on-meta`, body),
@@ -121,6 +126,7 @@ export const templatesApi = {
   adminDelete: (templateId) => api.delete(`/templates/admin/${templateId}`),
   adminRefreshStatus: (templateId) => api.post(`/templates/admin/${templateId}/refresh-status`),
   adminApproveAndSubmit: (templateId) => api.post(`/templates/admin/${templateId}/approve-and-submit`),
+  adminDirectApprove: (templateId) => api.post(`/templates/admin/${templateId}/direct-approve`),
 }
 
 export const campaignsApi = {
@@ -197,4 +203,22 @@ export const photoshareApi = {
     }),
 }
 
+export const dripApi = {
+  list: (params) => api.get('/drip-campaigns', { params }),
+  get: (id) => api.get(`/drip-campaigns/${id}`),
+  createManual: (body) => api.post('/drip-campaigns/manual', body),
+  generateAi: (body) => api.post('/drip-campaigns/ai-generate', body),
+  updateStep: (id, stepId, body) => api.put(`/drip-campaigns/${id}/step/${stepId}`, body),
+  activate: (id) => api.post(`/drip-campaigns/${id}/activate`),
+  pause: (id) => api.post(`/drip-campaigns/${id}/pause`),
+  resume: (id) => api.post(`/drip-campaigns/${id}/resume`),
+  stop: (id) => api.post(`/drip-campaigns/${id}/stop`),
+  delete: (id) => api.delete(`/drip-campaigns/${id}`),
+  getAnalytics: (id) => api.get(`/drip-campaigns/${id}/analytics`),
+  getEnrollments: (id, params) => api.get(`/drip-campaigns/${id}/enrollments`, { params }),
+  toggleEnrollmentStatus: (id, enrollmentId, status) =>
+    api.patch(`/drip-campaigns/${id}/enrollments/${enrollmentId}`, { status }),
+}
+
+export { api }
 export default api

@@ -658,7 +658,19 @@ export default function ManageClients() {
 
       {sharingClient && (
         <div className="mt-8 animate-fadeIn">
-          <Card title={`Magnifi AI — Client SSO & API Sharing (${sharingClient.name})`} className="!bg-[#0F172A] !border-purple-500/30 shadow-2xl shadow-purple-900/10">
+          <Card 
+            title={`Magnifi AI — Client SSO & API Sharing (${sharingClient.name})`} 
+            className="!bg-[#0F172A] !border-purple-500/30 shadow-2xl shadow-purple-900/10"
+            action={
+              <button 
+                onClick={() => setSharingClient(null)} 
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-[#334155] transition-all flex items-center justify-center"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            }
+          >
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1F2937]">
                 <div>

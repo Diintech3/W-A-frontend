@@ -12,6 +12,7 @@ import {
   X,
   LogOut,
   Camera,
+  CalendarClock,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
@@ -19,6 +20,7 @@ import { useAuth } from '../../hooks/useAuth'
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/campaigns', label: 'Campaigns', icon: Megaphone },
+  { to: '/drip-campaigns', label: 'Drip Campaigns', icon: CalendarClock },
   { to: '/contacts', label: 'Contacts', icon: Users },
   { to: '/inbox', label: 'Inbox', icon: MessageCircle },
   { to: '/chatbot', label: 'Chatbot', icon: Bot },
