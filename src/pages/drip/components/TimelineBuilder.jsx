@@ -56,6 +56,11 @@ function getScheduledDatePreview(startDate, step, idx = 0, preferredSendTime = '
     return `⏰ +${val} Hr after Step ${idx}`;
   }
 
+  if (unit === 'months') {
+    const timeFormatted = formatTime12h(step.sendTime || preferredSendTime || '10:00');
+    return `🗓️ +${val} Month(s) after Step ${idx} at ${timeFormatted}`;
+  }
+
   // Days
   const timeFormatted = formatTime12h(step.sendTime || preferredSendTime || '10:00');
   return `📅 +${val} Day(s) after Step ${idx} at ${timeFormatted}`;
@@ -359,13 +364,14 @@ export default function TimelineBuilder({
                             <option value="minutes">Minutes ⏱️</option>
                             <option value="hours">Hours ⏰</option>
                             <option value="days">Days 📅</option>
+                            <option value="months">Months 🗓️</option>
                           </select>
                         </div>
                       )}
                     </div>
 
-                    {/* If Unit is Days, show Time Picker (AM/PM) */}
-                    {(step.offsetUnit || 'days') === 'days' && (
+                    {/* If Unit is Days or Months, show Time Picker (AM/PM) */}
+                    {['days', 'months'].includes(step.offsetUnit || 'days') && (
                       <div className="flex items-center gap-2 border-l border-slate-800 pl-3">
                         <span className="text-xs font-semibold text-slate-400">At Time:</span>
                         {readOnly ? (

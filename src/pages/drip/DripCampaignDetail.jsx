@@ -23,6 +23,8 @@ import {
   Edit3,
   Save,
   Copy,
+  Wrench,
+  Clock,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
 import { templatesApi, contactsApi } from '../../services/api';
@@ -73,6 +75,8 @@ export default function DripCampaignDetail() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [savingMeta, setSavingMeta] = useState(false);
+  const [quickIntervalValue, setQuickIntervalValue] = useState(10);
+  const [quickIntervalUnit, setQuickIntervalUnit] = useState('minutes');
 
   useEffect(() => {
     loadCampaign();
@@ -156,6 +160,42 @@ export default function DripCampaignDetail() {
   async function handleSelectAudienceGroup(newGroupId) {
     if (!newGroupId || newGroupId === campaign.audienceGroupId?._id) return;
     handleUpdateMeta({ audienceGroupId: newGroupId });
+  }
+
+  async function handleApplyGlobalInterval() {
+    if (!steps.length) return;
+    const updatedSteps = steps.map((s, idx) => {
+      let offset = 0;
+      if (quickIntervalUnit === 'days' || quickIntervalUnit === 'months') {
+        offset = idx === 0 ? 1 : quickIntervalValue;
+      } else {
+        offset = idx === 0 ? 0 : quickIntervalValue;
+      }
+      return {
+        ...s,
+        offsetValue: offset,
+        offsetUnit: quickIntervalUnit,
+        dayOffset: quickIntervalUnit === 'days' ? (idx === 0 ? 1 : quickIntervalValue) : 1,
+      };
+    });
+    setSteps(updatedSteps);
+
+    try {
+      await Promise.all(
+        updatedSteps.map((s) =>
+          dripService.updateStep(id, s._id, {
+            offsetValue: s.offsetValue,
+            offsetUnit: s.offsetUnit,
+            dayOffset: s.dayOffset,
+          })
+        )
+      );
+      toast.success(`Updated interval to ${quickIntervalValue} ${quickIntervalUnit} for all steps!`);
+      loadCampaign();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save step intervals');
+    }
   }
 
   async function loadTemplates() {
@@ -605,17 +645,132 @@ export default function DripCampaignDetail() {
 
       {/* Tab 1: Timeline & Steps */}
       {activeTab === 'timeline' && (
-        <Card className="p-6 bg-slate-900 border-slate-800">
-          <TimelineBuilder
-            steps={steps}
-            onChange={setSteps}
-            templates={templates}
-            readOnly={['active', 'completed', 'stopped'].includes(campaign.status)}
-            onTemplateUpdated={loadCampaign}
-            campaignId={id}
-            startDate={campaign.startDate}
-          />
-        </Card>
+        <div className="space-y-6">
+          {/* Draft Setup & Timing Schedule Panel */}
+          {['draft', 'awaiting_approval'].includes(campaign.status) && (
+            <Card className="p-5 bg-slate-900/95 border-slate-800 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-white">Campaign Setup & Scheduling</h3>
+                </div>
+                <span className="text-[11px] text-cyan-400 font-semibold bg-cyan-950/40 px-2.5 py-0.5 rounded border border-cyan-500/30">
+                  Editable Configuration
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Target Audience Group */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-blue-400" /> Target Audience Group
+                  </label>
+                  <select
+                    value={campaign.audienceGroupId?._id || campaign.audienceGroupId || ''}
+                    onChange={(e) => handleSelectAudienceGroup(e.target.value)}
+                    disabled={savingMeta}
+                    className="w-full bg-slate-950 border border-slate-700 text-xs text-white font-semibold rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                  >
+                    {groups.map((g) => (
+                      <option key={g._id} value={g._id}>
+                        {g.name} ({(g.contactCount || 0).toLocaleString()} contacts)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Start Date */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={campaign.startDate ? new Date(campaign.startDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => handleUpdateMeta({ startDate: e.target.value })}
+                    disabled={savingMeta}
+                    className="w-full bg-slate-950 border border-slate-700 text-xs text-white font-semibold rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Initiate / Preferred Send Time */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" /> Preferred Dispatch Time
+                  </label>
+                  <input
+                    type="time"
+                    value={campaign.preferredSendTime || '10:00'}
+                    onChange={(e) => handleUpdateMeta({ preferredSendTime: e.target.value })}
+                    disabled={savingMeta}
+                    className="w-full bg-slate-950 border border-slate-700 text-xs text-emerald-400 font-mono font-bold rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Total Duration Days */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-purple-400" /> Total Duration (Days)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={campaign.durationDays || 30}
+                    onChange={(e) => handleUpdateMeta({ durationDays: parseInt(e.target.value) || 1 })}
+                    disabled={savingMeta}
+                    className="w-full bg-slate-950 border border-slate-700 text-xs text-cyan-400 font-bold rounded-xl p-2.5 focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Step Interval Adjuster across all steps */}
+              <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold text-slate-300">Set Interval for All Steps:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quickIntervalValue}
+                    onChange={(e) => setQuickIntervalValue(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-16 bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-lg px-2 py-1.5 text-center focus:border-emerald-500"
+                  />
+                  <select
+                    value={quickIntervalUnit}
+                    onChange={(e) => setQuickIntervalUnit(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-xs text-emerald-400 font-bold rounded-lg px-2.5 py-1.5 focus:border-emerald-500"
+                  >
+                    <option value="minutes">Minutes ⏱️</option>
+                    <option value="hours">Hours ⏰</option>
+                    <option value="days">Days 📅</option>
+                    <option value="months">Months 🗓️</option>
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleApplyGlobalInterval}
+                    className="text-xs bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border-emerald-500/30 font-bold"
+                  >
+                    Apply to All Steps
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <Card className="p-6 bg-slate-900 border-slate-800">
+            <TimelineBuilder
+              steps={steps}
+              onChange={setSteps}
+              templates={templates}
+              readOnly={['active', 'completed', 'stopped'].includes(campaign.status)}
+              onTemplateUpdated={loadCampaign}
+              campaignId={id}
+              startDate={campaign.startDate}
+            />
+          </Card>
+        </div>
       )}
 
       {/* Tab 2: Analytics & Funnel */}
