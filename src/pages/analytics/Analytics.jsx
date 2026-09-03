@@ -608,121 +608,89 @@ export default function Analytics() {
           {/* Full Drip Campaigns Breakdown Table */}
           <Card
             title="All Drip Automations Performance"
-            subtitle="Step-by-step metrics, conversion goals, and engagement analytics"
+            subtitle="Step-by-step delivery health, read rate, and conversion funnel analytics"
             action={
               <Link to="/drip-campaigns/new">
-                <Button size="sm" className="text-xs bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold">
+                <Button size="sm" className="text-xs bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold shadow-md shadow-cyan-500/20">
                   <Droplets className="h-3.5 w-3.5 mr-1" />
                   Create Sequence
                 </Button>
               </Link>
             }
           >
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="w-full overflow-x-auto">
+              <Table className="w-full">
                 <THead>
                   <TR>
-                    <TH>Automation Campaign</TH>
-                    <TH>Type</TH>
-                    <TH>Status</TH>
-                    <TH>Steps</TH>
-                    <TH>Enrolled Contacts</TH>
-                    <TH>Sent / Dispatched</TH>
-                    <TH>Delivered</TH>
-                    <TH>Read Rate</TH>
-                    <TH>Replies</TH>
-                    <TH>Conversions 🎯</TH>
-                    <TH className="text-right">Actions</TH>
+                    <TH className="w-[28%]">Campaign & Audience</TH>
+                    <TH className="w-[12%]">Status</TH>
+                    <TH className="w-[10%]">Sequence</TH>
+                    <TH className="w-[12%]">Enrolled</TH>
+                    <TH className="w-[10%]">Dispatched</TH>
+                    <TH className="w-[16%]">Delivery & Read</TH>
+                    <TH className="w-[12%] text-right">Actions</TH>
                   </TR>
                 </THead>
                 <TBody>
                   {dripCampaignsList.map((c) => (
                     <TR key={c._id} className="hover:bg-slate-800/40 transition">
                       <TD>
-                        <div className="font-semibold text-slate-200 flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           <Droplets className="h-4 w-4 text-cyan-400 shrink-0" />
-                          <Link to={`/drip-campaigns/${c._id}`} className="hover:text-cyan-400 transition font-bold">
+                          <Link to={`/drip-campaigns/${c._id}`} className="hover:text-cyan-400 transition font-bold text-slate-100 text-xs truncate max-w-[200px]">
                             {c.name}
                           </Link>
+                          {c.mode === 'ai' ? (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                              <Sparkles className="h-2.5 w-2.5" /> AI
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                              Manual
+                            </span>
+                          )}
                         </div>
-                        {c.goalDescription && (
-                          <div className="text-[11px] text-slate-400 max-w-xs truncate">
-                            Goal: {c.goalDescription}
-                          </div>
-                        )}
-                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span>Group: {c.audienceGroup?.name || 'Assigned Group'}</span>
-                          <span>·</span>
-                          <span>Time: {c.preferredSendTime || '10:00'}</span>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-1">
+                          <span>Grp: <strong className="text-slate-400">{c.audienceGroup?.name || 'All'}</strong></span>
+                          <span>•</span>
+                          <span>Time: <strong className="text-slate-400 font-mono">{c.preferredSendTime || '10:00'}</strong></span>
                         </div>
-                      </TD>
-
-                      <TD>
-                        {c.mode === 'ai' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                            <Sparkles className="h-3 w-3" /> AI
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Manual
-                          </span>
-                        )}
                       </TD>
 
                       <TD>{getDripStatusBadge(c.status)}</TD>
 
                       <TD>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-800/90 text-cyan-400 border border-slate-700 font-mono">
                           {c.totalSteps} Steps
                         </span>
                       </TD>
 
                       <TD>
                         <div className="text-xs font-bold text-slate-200">
-                          {c.stats?.enrollments?.total || c.totalAudience || 0}
+                          {c.stats?.enrollments?.total || c.totalAudience || 0} contacts
                         </div>
-                        <div className="text-[10px] text-emerald-400">
+                        <div className="text-[10px] text-emerald-400 font-medium">
                           {c.stats?.enrollments?.active || 0} active in flow
                         </div>
                       </TD>
 
-                      <TD className="text-xs font-bold text-slate-200">
-                        {c.stats?.delivery?.totalDispatched || 0}
+                      <TD>
+                        <span className="text-xs font-bold text-slate-200 font-mono">
+                          {c.stats?.delivery?.totalDispatched || 0}
+                        </span>
+                        <div className="text-[10px] text-slate-500">msgs sent</div>
                       </TD>
 
                       <TD>
-                        <div className="text-xs font-bold text-emerald-400">
-                          {c.stats?.delivery?.deliveryRate || 0}%
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {c.stats?.delivery?.delivered || 0} msgs
-                        </div>
-                      </TD>
-
-                      <TD>
-                        <div className="text-xs font-bold text-sky-400">
-                          {c.stats?.delivery?.readRate || 0}%
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {c.stats?.delivery?.read || 0} read
-                        </div>
-                      </TD>
-
-                      <TD>
-                        <div className="text-xs font-bold text-amber-400">
-                          {c.stats?.delivery?.replied || 0}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {c.stats?.delivery?.replyRate || 0}%
-                        </div>
-                      </TD>
-
-                      <TD>
-                        <div className="text-xs font-bold text-purple-400">
-                          {c.stats?.enrollments?.converted || 0}
-                        </div>
-                        <div className="text-[10px] text-purple-300">
-                          {c.stats?.delivery?.conversionRate || 0}%
+                        <div className="space-y-0.5">
+                          <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                            <span>✓ {c.stats?.delivery?.deliveryRate || 0}%</span>
+                            <span className="text-[10px] text-slate-400 font-normal">({c.stats?.delivery?.delivered || 0} deliv)</span>
+                          </div>
+                          <div className="text-[11px] font-medium text-sky-400 flex items-center gap-1.5">
+                            <span>👁️ {c.stats?.delivery?.readRate || 0}% read</span>
+                            <span className="text-[10px] text-slate-500">({c.stats?.delivery?.read || 0})</span>
+                          </div>
                         </div>
                       </TD>
 
@@ -734,13 +702,13 @@ export default function Analytics() {
                               setInspectCampaign(c)
                               setInspectModalOpen(true)
                             }}
-                            className="px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-xs text-cyan-400 font-semibold border border-cyan-500/30 transition"
+                            className="px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-xs text-cyan-400 font-bold border border-cyan-500/30 transition whitespace-nowrap"
                           >
                             Inspect Funnel
                           </button>
                           <Link
                             to={`/drip-campaigns/${c._id}`}
-                            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition border border-slate-700"
                             title="Manage Sequence"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
@@ -752,7 +720,7 @@ export default function Analytics() {
 
                   {!dripCampaignsList.length && (
                     <TR>
-                      <TD colSpan={11} className="text-center py-8 text-slate-500 text-sm">
+                      <TD colSpan={7} className="text-center py-8 text-slate-500 text-sm">
                         No drip automations found. Create your first automated sequence to start tracking step-by-step performance.
                       </TD>
                     </TR>
