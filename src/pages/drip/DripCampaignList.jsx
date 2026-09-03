@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Sparkles,
   Wrench,
+  Copy,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
 import { Card } from '../../components/ui/Card';
@@ -53,6 +54,12 @@ export default function DripCampaignList() {
     }
     setActionLoadingId(campaignId);
     try {
+      if (action === 'duplicate') {
+        const res = await dripService.duplicate(campaignId);
+        toast.success(res.data?.message || 'Campaign duplicated as draft at top!');
+        await fetchCampaigns();
+        return;
+      }
       if (action === 'pause') await dripService.pause(campaignId);
       if (action === 'resume') await dripService.resume(campaignId);
       if (action === 'stop') {
@@ -324,6 +331,17 @@ export default function DripCampaignList() {
                             <Square className="w-3 h-3" /> Stop
                           </Button>
                         )}
+
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={isActionLoading}
+                          onClick={() => handleAction(c._id, 'duplicate')}
+                          className="text-xs bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-cyan-500/30 inline-flex items-center gap-1"
+                          title="Duplicate this campaign as a new draft"
+                        >
+                          <Copy className="w-3 h-3" /> Copy
+                        </Button>
 
                         <Button
                           variant="ghost"

@@ -20,9 +20,12 @@ import {
   Droplets,
   Zap,
   Loader2,
+  Edit3,
+  Save,
+  Copy,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
-import { templatesApi } from '../../services/api';
+import { templatesApi, contactsApi } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -66,9 +69,15 @@ export default function DripCampaignDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [groups, setGroups] = useState([]);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [savingMeta, setSavingMeta] = useState(false);
+
   useEffect(() => {
     loadCampaign();
     loadTemplates();
+    loadGroups();
   }, [id]);
 
   useEffect(() => {
@@ -76,12 +85,29 @@ export default function DripCampaignDetail() {
     if (activeTab === 'contacts') loadEnrollments();
   }, [activeTab, id, enrollmentPage, enrollmentSearch, enrollmentStatusFilter]);
 
+  async function loadGroups() {
+    try {
+      const res = await contactsApi.groups();
+      const grps = Array.isArray(res.data?.data?.groups)
+        ? res.data.data.groups
+        : Array.isArray(res.data?.groups)
+        ? res.data.groups
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
+      setGroups(grps);
+    } catch (err) {
+      console.error('Failed to load contact groups:', err);
+    }
+  }
+
   async function loadCampaign() {
     setLoading(true);
     try {
       const res = await dripService.get(id);
       if (res.data?.success) {
         setCampaign(res.data.data.campaign);
+        setNameInput(res.data.data.campaign.name || '');
         setSteps(res.data.data.steps || []);
         setProgressSummary(res.data.data.progressSummary || null);
       }
@@ -89,6 +115,42 @@ export default function DripCampaignDetail() {
       toast.error(err.response?.data?.message || 'Failed to load campaign');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSaveName() {
+    if (!nameInput.trim()) {
+      toast.error('Campaign name cannot be empty');
+      return;
+    }
+    setSavingMeta(true);
+    try {
+      const res = await dripService.update(id, { name: nameInput.trim() });
+      if (res.data?.success) {
+        toast.success('Campaign renamed successfully');
+        setEditingName(false);
+        setCampaign(res.data.data.campaign);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update campaign name');
+    } finally {
+      setSavingMeta(false);
+    }
+  }
+
+  async function handleSelectAudienceGroup(newGroupId) {
+    if (!newGroupId || newGroupId === campaign.audienceGroupId?._id) return;
+    setSavingMeta(true);
+    try {
+      const res = await dripService.update(id, { audienceGroupId: newGroupId });
+      if (res.data?.success) {
+        toast.success('Audience group updated! Contacts updated for next activation.');
+        setCampaign(res.data.data.campaign);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update audience group');
+    } finally {
+      setSavingMeta(false);
     }
   }
 
@@ -265,8 +327,50 @@ export default function DripCampaignDetail() {
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to All Campaigns
           </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">{campaign.name}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="text-lg font-extrabold text-white bg-slate-950 border-slate-700 py-1 h-auto min-w-[240px]"
+                  placeholder="Enter campaign name..."
+                />
+                <Button
+                  size="sm"
+                  onClick={handleSaveName}
+                  disabled={savingMeta}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 inline-flex items-center gap-1"
+                >
+                  <Save className="w-3.5 h-3.5" /> Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setNameInput(campaign.name);
+                    setEditingName(false);
+                  }}
+                  className="text-xs text-slate-400"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-extrabold text-white tracking-tight">{campaign.name}</h1>
+                {['draft', 'awaiting_approval'].includes(campaign.status) && (
+                  <button
+                    onClick={() => setEditingName(true)}
+                    className="text-slate-500 hover:text-emerald-400 p-1.5 rounded-lg hover:bg-slate-800 transition inline-flex items-center"
+                    title="Rename Campaign"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
             <span
               className={`text-xs font-bold px-3 py-0.5 rounded-full border ${
                 campaign.status === 'active'
@@ -348,9 +452,31 @@ export default function DripCampaignDetail() {
       {/* Campaign Meta Overview Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div className="text-[11px] font-medium text-slate-400">Audience Group</div>
-          <div className="text-sm font-bold text-white mt-0.5">{campaign.audienceGroupId?.name || 'Group'}</div>
-          <div className="text-[10px] text-slate-500">{(campaign.totalAudience || 0).toLocaleString()} contacts</div>
+          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 mb-1">
+            <span>Audience Group</span>
+            {['draft', 'awaiting_approval'].includes(campaign.status) && (
+              <span className="text-[10px] text-cyan-400 font-bold">Switch Group</span>
+            )}
+          </div>
+          {['draft', 'awaiting_approval'].includes(campaign.status) && groups.length > 0 ? (
+            <select
+              value={campaign.audienceGroupId?._id || campaign.audienceGroupId || ''}
+              onChange={(e) => handleSelectAudienceGroup(e.target.value)}
+              disabled={savingMeta}
+              className="w-full bg-slate-950 border border-slate-700 text-xs text-emerald-400 font-bold rounded-lg p-1.5 focus:border-emerald-500 focus:outline-none cursor-pointer"
+            >
+              {groups.map((g) => (
+                <option key={g._id} value={g._id}>
+                  {g.name} ({(g.contactCount || 0).toLocaleString()} contacts)
+                </option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <div className="text-sm font-bold text-white mt-0.5">{campaign.audienceGroupId?.name || 'Group'}</div>
+              <div className="text-[10px] text-slate-500">{(campaign.totalAudience || 0).toLocaleString()} contacts</div>
+            </>
+          )}
         </div>
 
         <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
