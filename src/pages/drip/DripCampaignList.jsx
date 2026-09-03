@@ -196,7 +196,7 @@ export default function DripCampaignList() {
       </div>
 
       {/* Campaigns Table Card */}
-      <Card className="p-0 bg-slate-900 border-slate-800 overflow-hidden shadow-xl">
+      <Card className="p-0 bg-slate-900 border-slate-800 shadow-xl">
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <h2 className="text-sm font-bold text-white">All Drip Sequences</h2>
           <Button variant="ghost" size="sm" onClick={fetchCampaigns} className="text-xs text-slate-400 flex items-center gap-1.5">
@@ -225,7 +225,7 @@ export default function DripCampaignList() {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto min-h-[220px]">
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950/60 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 <tr>
@@ -240,7 +240,7 @@ export default function DripCampaignList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {campaigns.map((c) => {
+                {campaigns.map((c, idx) => {
                   const stats = c.stats || {};
                   const isActionLoading = actionLoadingId === c._id;
                   const campaignSpent = stats.totalSpent !== undefined ? stats.totalSpent : (stats.totalSent || 0) * 1.0;
@@ -263,28 +263,29 @@ export default function DripCampaignList() {
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                        <Badge
+                          variant={c.mode === 'ai' ? 'default' : 'secondary'}
+                          className={`text-[10px] uppercase font-bold flex items-center gap-1 w-fit ${
                             c.mode === 'ai'
-                              ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                              : 'bg-slate-700/60 text-slate-300 border border-slate-600'
+                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                              : 'bg-slate-800 text-slate-300 border-slate-700'
                           }`}
                         >
                           {c.mode === 'ai' ? (
                             <>
-                              <Sparkles className="w-2.5 h-2.5" /> AI
+                              <Sparkles className="w-2.5 h-2.5 text-purple-400" /> AI Strategy
                             </>
                           ) : (
                             <>
-                              <Wrench className="w-2.5 h-2.5" /> Manual
+                              <Wrench className="w-2.5 h-2.5 text-slate-400" /> Manual
                             </>
                           )}
-                        </span>
+                        </Badge>
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="font-medium text-slate-200">
-                          {c.audienceGroupId?.name || 'Contact Group'}
+                          {c.audienceGroupId?.name || 'All Contacts'}
                         </div>
                         <div className="text-[10px] text-slate-500">
                           {(c.totalAudience || 0).toLocaleString()} contacts
@@ -300,7 +301,7 @@ export default function DripCampaignList() {
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1.5">
                           <span>₹{campaignSpent.toLocaleString()}</span>
-                          <span className="text-[10px] text-slate-400 font-normal font-sans">({stats.totalSent || 0} sent)</span>
+                          <span className="text-[10px] text-slate-500 font-normal font-sans">({stats.totalSent || 0} sent)</span>
                         </div>
                         <div className="text-[10px] text-slate-500">
                           {stats.deliveredCount || stats.totalSent || 0} delivered
@@ -315,18 +316,14 @@ export default function DripCampaignList() {
                               Conv: {stats.converted || 0}
                             </span>
                           </div>
-                          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className="bg-emerald-500 h-1.5 rounded-full"
-                              style={{
-                                width: `${
-                                  stats.totalEnrolled > 0
-                                    ? Math.min(100, Math.round(((stats.converted || 0) / stats.totalEnrolled) * 100))
-                                    : 0
-                                }%`,
-                              }}
-                            />
-                          </div>
+                          <Progress
+                            value={
+                              stats.totalEnrolled > 0
+                                ? Math.min(100, Math.round(((stats.converted || 0) / stats.totalEnrolled) * 100))
+                                : 0
+                            }
+                            className="h-1.5 bg-slate-800"
+                          />
                         </div>
                       </td>
 
@@ -335,7 +332,6 @@ export default function DripCampaignList() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center justify-end">
-                          {/* Three-Dot Options Dropdown */}
                           <div className="relative inline-block text-left">
                             <button
                               type="button"
@@ -351,7 +347,11 @@ export default function DripCampaignList() {
 
                             {openMenuId === c._id && (
                               <div
-                                className="absolute right-0 mt-1 w-48 bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-800"
+                                className={`absolute right-0 w-48 bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-800 ${
+                                  idx >= Math.max(1, campaigns.length - 2)
+                                    ? 'bottom-full mb-1.5 origin-bottom-right'
+                                    : 'top-full mt-1.5 origin-top-right'
+                                }`}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="py-1">
