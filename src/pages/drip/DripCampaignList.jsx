@@ -19,6 +19,8 @@ import {
   Copy,
   MoreVertical,
   Eye,
+  IndianRupee,
+  Send,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
 import { Card } from '../../components/ui/Card';
@@ -94,6 +96,8 @@ export default function DripCampaignList() {
   const totalEnrolled = campaigns.reduce((acc, c) => acc + (c.stats?.totalEnrolled || c.totalAudience || 0), 0);
   const totalConverted = campaigns.reduce((acc, c) => acc + (c.stats?.converted || 0), 0);
   const totalOptedOut = campaigns.reduce((acc, c) => acc + (c.stats?.optedOut || 0), 0);
+  const totalDispatched = campaigns.reduce((acc, c) => acc + (c.stats?.totalSent || 0), 0);
+  const totalAmountSpent = campaigns.reduce((acc, c) => acc + (c.stats?.totalSpent || (c.stats?.totalSent || 0) * 1.0), 0);
 
   function getStatusBadge(status) {
     const config = {
@@ -135,9 +139,9 @@ export default function DripCampaignList() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card className="p-4 bg-slate-900 border-slate-800 flex items-center gap-3">
-          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
             <Zap className="w-5 h-5" />
           </div>
           <div>
@@ -147,7 +151,7 @@ export default function DripCampaignList() {
         </Card>
 
         <Card className="p-4 bg-slate-900 border-slate-800 flex items-center gap-3">
-          <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+          <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 shrink-0">
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -157,22 +161,36 @@ export default function DripCampaignList() {
         </Card>
 
         <Card className="p-4 bg-slate-900 border-slate-800 flex items-center gap-3">
-          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
+          <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20 shrink-0">
+            <Send className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">Dispatched</div>
+            <div className="text-xl font-bold text-cyan-400 mt-0.5 font-mono">{totalDispatched.toLocaleString()}</div>
+          </div>
+        </Card>
+
+        {/* 💰 Total Amount Incurred (₹1 per message) */}
+        <Card className="p-4 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border-emerald-500/40 flex items-center gap-3 shadow-lg shadow-emerald-500/5">
+          <div className="p-3 bg-emerald-500/15 text-emerald-400 rounded-xl border border-emerald-500/30 shrink-0">
+            <IndianRupee className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[11px] text-emerald-300 font-bold uppercase tracking-wider">Total Amount</div>
+            <div className="text-xl font-black text-emerald-400 mt-0.5 font-mono">
+              ₹{totalAmountSpent.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-[9px] text-slate-400 font-medium">₹1.00 / msg sent</div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-slate-900 border-slate-800 flex items-center gap-3">
+          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20 shrink-0">
             <Target className="w-5 h-5" />
           </div>
           <div>
             <div className="text-xs text-slate-400 font-medium">Leads Converted</div>
             <div className="text-xl font-bold text-purple-400 mt-0.5">{totalConverted.toLocaleString()}</div>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-slate-900 border-slate-800 flex items-center gap-3">
-          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-            <Ban className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs text-slate-400 font-medium">Opted Out (STOP)</div>
-            <div className="text-xl font-bold text-amber-400 mt-0.5">{totalOptedOut.toLocaleString()}</div>
           </div>
         </Card>
       </div>
@@ -216,6 +234,7 @@ export default function DripCampaignList() {
                   <th className="py-3.5 px-4">Audience</th>
                   <th className="py-3.5 px-4">Steps</th>
                   <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Messages &amp; Cost</th>
                   <th className="py-3.5 px-4">Progress / Enrolled</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
@@ -224,6 +243,7 @@ export default function DripCampaignList() {
                 {campaigns.map((c) => {
                   const stats = c.stats || {};
                   const isActionLoading = actionLoadingId === c._id;
+                  const campaignSpent = stats.totalSpent !== undefined ? stats.totalSpent : (stats.totalSent || 0) * 1.0;
 
                   return (
                     <tr
@@ -271,11 +291,21 @@ export default function DripCampaignList() {
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 font-bold text-cyan-400">
+                      <td className="py-4 px-4 font-bold text-cyan-400 font-mono">
                         {c.totalSteps || 0} Steps ({c.durationDays || 30}d)
                       </td>
 
                       <td className="py-4 px-4">{getStatusBadge(c.status)}</td>
+
+                      <td className="py-4 px-4">
+                        <div className="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1">
+                          <span>₹{campaignSpent.toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">({stats.totalSent || 0} sent)</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {stats.deliveredCount || stats.totalSent || 0} delivered
+                        </div>
+                      </td>
 
                       <td className="py-4 px-4">
                         <div className="space-y-1 min-w-[120px]">

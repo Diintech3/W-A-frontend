@@ -544,13 +544,15 @@ export default function DripCampaignDetail() {
           </div>
         </div>
 
-        {/* Card 4: Estimated Cost */}
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div className="text-[11px] font-medium text-slate-400">Estimated Cost</div>
-          <div className="text-sm font-bold text-emerald-400 mt-0.5">
-            ₹{(campaign.estimatedCost || 0).toFixed(2)}
+        {/* Card 4: Total Amount Incurred (₹1/msg) */}
+        <div className="bg-slate-900 p-4 rounded-xl border border-emerald-500/20">
+          <div className="text-[11px] font-medium text-emerald-400">Total Billed / Spent</div>
+          <div className="text-sm font-bold text-emerald-400 mt-0.5 font-mono">
+            ₹{((progressSummary?.totalActualCost !== undefined ? progressSummary.totalActualCost : campaign.totalActualCost) || 0).toFixed(2)}
           </div>
-          <div className="text-[10px] text-slate-500">Meta Conversation fees</div>
+          <div className="text-[10px] text-slate-400">
+            {progressSummary?.totalSentMsgs !== undefined ? progressSummary.totalSentMsgs : (campaign.totalSentMsgs || 0)} msgs (₹1.00/msg)
+          </div>
         </div>
       </div>
 
