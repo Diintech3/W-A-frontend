@@ -454,13 +454,13 @@ export default function DripCampaignDetail() {
       </div>
 
       {/* Campaign Meta Overview Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {/* Card 1: Audience Group */}
-        <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
+        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 mb-1">
             <span>Audience Group</span>
             {['draft', 'awaiting_approval'].includes(campaign.status) && (
-              <span className="text-[10px] text-cyan-400 font-bold">Switch</span>
+              <span className="text-[10px] text-cyan-400 font-bold">Switch Group</span>
             )}
           </div>
           {['draft', 'awaiting_approval'].includes(campaign.status) && groups.length > 0 ? (
@@ -484,93 +484,28 @@ export default function DripCampaignDetail() {
           )}
         </div>
 
-        {/* Card 2: Duration */}
-        <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 mb-1">
-            <span>Duration & Steps</span>
-            {['draft', 'awaiting_approval'].includes(campaign.status) && (
-              <span className="text-[10px] text-cyan-400 font-bold">Edit</span>
-            )}
+        {/* Card 2: Duration & Steps */}
+        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div className="text-[11px] font-medium text-slate-400">Duration & Steps</div>
+          <div className="text-sm font-bold text-cyan-400 mt-0.5">
+            {campaign.durationDays || 30} Days ({steps.length} Steps)
           </div>
-          {['draft', 'awaiting_approval'].includes(campaign.status) ? (
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <input
-                type="number"
-                min="1"
-                max="365"
-                value={campaign.durationDays || 30}
-                onChange={(e) => handleUpdateMeta({ durationDays: parseInt(e.target.value) || 1 })}
-                disabled={savingMeta}
-                className="w-16 bg-slate-950 border border-slate-700 text-xs text-cyan-400 font-bold rounded-lg px-2 py-1 focus:border-cyan-500 focus:outline-none text-center font-mono"
-              />
-              <span className="text-xs text-slate-300 font-medium">Days ({steps.length} Steps)</span>
-            </div>
-          ) : (
-            <>
-              <div className="text-sm font-bold text-cyan-400 mt-0.5">
-                {campaign.durationDays || 30} Days ({steps.length} Steps)
-              </div>
-              <div className="text-[10px] text-slate-500">Mode: {campaign.mode?.toUpperCase()}</div>
-            </>
-          )}
+          <div className="text-[10px] text-slate-500">Mode: {campaign.mode?.toUpperCase()}</div>
         </div>
 
         {/* Card 3: Start Date */}
-        <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 mb-1">
-            <span>Start Date</span>
-            {['draft', 'awaiting_approval'].includes(campaign.status) && (
-              <span className="text-[10px] text-cyan-400 font-bold">Edit</span>
-            )}
+        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div className="text-[11px] font-medium text-slate-400">Start Date</div>
+          <div className="text-sm font-bold text-white mt-0.5">
+            {new Date(campaign.startDate).toLocaleDateString()}
           </div>
-          {['draft', 'awaiting_approval'].includes(campaign.status) ? (
-            <input
-              type="date"
-              value={campaign.startDate ? new Date(campaign.startDate).toISOString().split('T')[0] : ''}
-              onChange={(e) => handleUpdateMeta({ startDate: e.target.value })}
-              disabled={savingMeta}
-              className="w-full bg-slate-950 border border-slate-700 text-xs text-white font-bold rounded-lg px-2 py-1 focus:border-emerald-500 focus:outline-none cursor-pointer"
-            />
-          ) : (
-            <>
-              <div className="text-sm font-bold text-white mt-0.5">
-                {new Date(campaign.startDate).toLocaleDateString()}
-              </div>
-              <div className="text-[10px] text-slate-500">
-                {new Date(campaign.startDate) > new Date() ? 'Scheduled Ahead' : 'Started'}
-              </div>
-            </>
-          )}
+          <div className="text-[10px] text-slate-500">
+            {new Date(campaign.startDate) > new Date() ? 'Upcoming Scheduled' : 'Started'}
+          </div>
         </div>
 
-        {/* Card 4: Initiate / Send Time */}
-        <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 mb-1">
-            <span>Initiate Time</span>
-            {['draft', 'awaiting_approval'].includes(campaign.status) && (
-              <span className="text-[10px] text-cyan-400 font-bold">Edit</span>
-            )}
-          </div>
-          {['draft', 'awaiting_approval'].includes(campaign.status) ? (
-            <input
-              type="time"
-              value={campaign.preferredSendTime || '10:00'}
-              onChange={(e) => handleUpdateMeta({ preferredSendTime: e.target.value })}
-              disabled={savingMeta}
-              className="w-full bg-slate-950 border border-slate-700 text-xs text-emerald-400 font-mono font-bold rounded-lg px-2 py-1 focus:border-emerald-500 focus:outline-none cursor-pointer"
-            />
-          ) : (
-            <>
-              <div className="text-sm font-bold text-emerald-400 mt-0.5 font-mono">
-                {campaign.preferredSendTime || '10:00'}
-              </div>
-              <div className="text-[10px] text-slate-500">Daily Dispatch Time</div>
-            </>
-          )}
-        </div>
-
-        {/* Card 5: Estimated Cost */}
-        <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
+        {/* Card 4: Estimated Cost */}
+        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
           <div className="text-[11px] font-medium text-slate-400">Estimated Cost</div>
           <div className="text-sm font-bold text-emerald-400 mt-0.5">
             ₹{(campaign.estimatedCost || 0).toFixed(2)}
