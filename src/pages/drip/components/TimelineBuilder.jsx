@@ -31,37 +31,34 @@ function formatTime12h(timeStr) {
   return `${hour12}:${minuteStr} ${period}`;
 }
 
-function getScheduledDatePreview(startDate, step) {
+function getScheduledDatePreview(startDate, step, idx = 0, preferredSendTime = '10:00') {
   const unit = step.offsetUnit || 'days';
   const val = Number(step.offsetValue !== undefined ? step.offsetValue : (step.dayOffset ?? 1));
 
+  if (idx === 0) {
+    if (unit === 'minutes') {
+      if (val <= 0) return '⚡ Immediately on Start';
+      return `⏱️ +${val} Min after Start`;
+    }
+    if (unit === 'hours') {
+      if (val <= 0) return '⚡ Immediately on Start';
+      return `⏰ +${val} Hr after Start`;
+    }
+    const timeFormatted = formatTime12h(step.sendTime || preferredSendTime || '10:00');
+    return `📅 Day 1 at ${timeFormatted}`;
+  }
+
   if (unit === 'minutes') {
-    if (val <= 0) return '⚡ Immediately (0 Min)';
-    const target = new Date(Date.now() + val * 60 * 1000);
-    const timeStr = target.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `⏱️ In ${val} Min (approx ${timeStr})`;
+    return `⏱️ +${val} Min after Step ${idx}`;
   }
 
   if (unit === 'hours') {
-    if (val <= 0) return '⚡ Immediately (0 Hr)';
-    const target = new Date(Date.now() + val * 3600 * 1000);
-    const timeStr = target.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `⏰ In ${val} Hr (approx ${timeStr})`;
+    return `⏰ +${val} Hr after Step ${idx}`;
   }
 
   // Days
-  const base = startDate ? new Date(startDate) : new Date();
-  const daysToAdd = val <= 1 ? 0 : val - 1;
-  const targetDate = new Date(base);
-  targetDate.setDate(targetDate.getDate() + daysToAdd);
-
-  const isToday = targetDate.toDateString() === new Date().toDateString();
-  const timeFormatted = formatTime12h(step.sendTime || '10:00');
-
-  if (isToday) {
-    return `📅 Today at ${timeFormatted}`;
-  }
-  return `📅 ${targetDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} at ${timeFormatted}`;
+  const timeFormatted = formatTime12h(step.sendTime || preferredSendTime || '10:00');
+  return `📅 +${val} Day(s) after Step ${idx} at ${timeFormatted}`;
 }
 
 export default function TimelineBuilder({
@@ -240,7 +237,7 @@ export default function TimelineBuilder({
                       {/* Exact Scheduled Dispatch Badge */}
                       <span className="whitespace-nowrap text-[11px] font-medium text-slate-300 bg-cyan-950/40 px-3 py-1 rounded-lg border border-cyan-500/30 inline-flex items-center gap-1.5">
                         <span className="text-slate-400">Dispatch:</span>
-                        <strong className="text-cyan-400 font-mono">{getScheduledDatePreview(startDate, step)}</strong>
+                        <strong className="text-cyan-400 font-mono">{getScheduledDatePreview(startDate, step, idx)}</strong>
                       </span>
                     </div>
 
@@ -302,11 +299,11 @@ export default function TimelineBuilder({
                   <div className="flex flex-wrap items-center gap-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-emerald-400" /> Send After:
+                        <Clock className="w-3.5 h-3.5 text-emerald-400" /> {idx === 0 ? 'Initial Dispatch:' : 'Interval Gap:'}
                       </span>
                       {readOnly ? (
                         <span className="text-xs font-bold text-emerald-400 bg-slate-900 px-2 py-1 rounded border border-slate-700 font-mono">
-                          {step.offsetValue !== undefined ? step.offsetValue : (step.dayOffset ?? 1)} {(step.offsetUnit || 'days').toUpperCase()}
+                          {idx === 0 && (step.offsetValue === 0 || step.offsetValue === undefined) ? 'Immediate on Start' : `${step.offsetValue !== undefined ? step.offsetValue : (step.dayOffset ?? 1)} ${(step.offsetUnit || 'days').toUpperCase()}`}
                         </span>
                       ) : (
                         <div className="flex items-center gap-1.5">

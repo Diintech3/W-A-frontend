@@ -88,15 +88,16 @@ export default function DripCampaignWizard() {
       prev.map((s, idx) => {
         let offset = 0;
         if (unit === 'days') {
-          offset = idx === 0 ? 1 : 1 + idx * num;
+          offset = idx === 0 ? 1 : num;
         } else {
-          offset = idx === 0 ? 0 : idx * num;
+          offset = idx === 0 ? 0 : num;
         }
         return {
           ...s,
           offsetValue: offset,
           offsetUnit: unit,
-          dayOffset: unit === 'days' ? Math.max(1, offset) : 1,
+          dayOffset: unit === 'days' ? (idx === 0 ? 1 : num) : 1,
+          sendTime: s.sendTime || preferredSendTime || '10:00',
         };
       })
     );
