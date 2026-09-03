@@ -334,31 +334,7 @@ export default function DripCampaignList() {
                         className="py-4 px-4 text-right whitespace-nowrap"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-1.5">
-                          {c.status === 'active' && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              disabled={isActionLoading}
-                              onClick={() => handleAction(c._id, 'pause')}
-                              className="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/30 inline-flex items-center gap-1 px-2.5 py-1"
-                            >
-                              <Pause className="w-3 h-3" /> Pause
-                            </Button>
-                          )}
-
-                          {c.status === 'paused' && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              disabled={isActionLoading}
-                              onClick={() => handleAction(c._id, 'resume')}
-                              className="text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 inline-flex items-center gap-1 px-2.5 py-1"
-                            >
-                              <Play className="w-3 h-3" /> Resume
-                            </Button>
-                          )}
-
+                        <div className="flex items-center justify-end">
                           {/* Three-Dot Options Dropdown */}
                           <div className="relative inline-block text-left">
                             <button
@@ -375,10 +351,38 @@ export default function DripCampaignList() {
 
                             {openMenuId === c._id && (
                               <div
-                                className="absolute right-0 mt-1 w-44 bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-800"
+                                className="absolute right-0 mt-1 w-48 bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-800"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="py-1">
+                                  {c.status === 'paused' && (
+                                    <button
+                                      type="button"
+                                      disabled={isActionLoading}
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        handleAction(c._id, 'resume');
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 text-xs text-emerald-400 hover:bg-emerald-500/15 flex items-center gap-2 transition font-bold"
+                                    >
+                                      <Play className="w-3.5 h-3.5 text-emerald-400" /> Resume Campaign
+                                    </button>
+                                  )}
+
+                                  {c.status === 'active' && (
+                                    <button
+                                      type="button"
+                                      disabled={isActionLoading}
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        handleAction(c._id, 'pause');
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 text-xs text-amber-400 hover:bg-amber-500/15 flex items-center gap-2 transition font-bold"
+                                    >
+                                      <Pause className="w-3.5 h-3.5 text-amber-400" /> Pause Campaign
+                                    </button>
+                                  )}
+
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -422,9 +426,9 @@ export default function DripCampaignList() {
                                       setOpenMenuId(null);
                                       handleAction(c._id, 'delete');
                                     }}
-                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/15 flex items-center gap-2 transition font-medium"
+                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition font-medium"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Delete Campaign
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Delete Sequence
                                   </button>
                                 </div>
                               </div>
