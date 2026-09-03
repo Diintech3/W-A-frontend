@@ -158,6 +158,7 @@ export const inboxApi = {
 export const analyticsApi = {
   overview: () => api.get('/analytics/overview'),
   campaigns: () => api.get('/analytics/campaigns'),
+  drip: () => api.get('/analytics/drip'),
   timeline: () => api.get('/analytics/timeline'),
 }
 
