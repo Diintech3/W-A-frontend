@@ -17,6 +17,8 @@ import {
   Sparkles,
   Wrench,
   Copy,
+  MoreVertical,
+  Eye,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
 import { Card } from '../../components/ui/Card';
@@ -27,9 +29,15 @@ export default function DripCampaignList() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
     fetchCampaigns();
+    function handleGlobalClick() {
+      setOpenMenuId(null);
+    }
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
   async function fetchCampaigns() {
@@ -293,74 +301,117 @@ export default function DripCampaignList() {
                       </td>
 
                       <td
-                        className="py-4 px-4 text-right space-x-2"
+                        className="py-4 px-4 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {c.status === 'active' && (
+                        <div className="flex items-center justify-end gap-2">
+                          {c.status === 'active' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={isActionLoading}
+                              onClick={() => handleAction(c._id, 'pause')}
+                              className="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/30 inline-flex items-center gap-1"
+                            >
+                              <Pause className="w-3 h-3" /> Pause
+                            </Button>
+                          )}
+
+                          {c.status === 'paused' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={isActionLoading}
+                              onClick={() => handleAction(c._id, 'resume')}
+                              className="text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 inline-flex items-center gap-1"
+                            >
+                              <Play className="w-3 h-3" /> Resume
+                            </Button>
+                          )}
+
                           <Button
                             variant="secondary"
                             size="sm"
                             disabled={isActionLoading}
-                            onClick={() => handleAction(c._id, 'pause')}
-                            className="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/30 inline-flex items-center gap-1"
+                            onClick={() => handleAction(c._id, 'duplicate')}
+                            className="text-xs bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-cyan-500/30 inline-flex items-center gap-1"
+                            title="Duplicate this campaign as a new draft"
                           >
-                            <Pause className="w-3 h-3" /> Pause
+                            <Copy className="w-3 h-3" /> Copy
                           </Button>
-                        )}
 
-                        {c.status === 'paused' && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={isActionLoading}
-                            onClick={() => handleAction(c._id, 'resume')}
-                            className="text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 inline-flex items-center gap-1"
-                          >
-                            <Play className="w-3 h-3" /> Resume
-                          </Button>
-                        )}
+                          {/* Three-Dot Options Dropdown */}
+                          <div className="relative inline-block text-left">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === c._id ? null : c._id);
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition border border-transparent hover:border-slate-700 inline-flex items-center justify-center"
+                              title="More Options"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
 
-                        {['active', 'scheduled', 'paused'].includes(c.status) && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={isActionLoading}
-                            onClick={() => handleAction(c._id, 'stop')}
-                            className="text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border-rose-500/30 inline-flex items-center gap-1"
-                          >
-                            <Square className="w-3 h-3" /> Stop
-                          </Button>
-                        )}
+                            {openMenuId === c._id && (
+                              <div
+                                className="absolute right-0 mt-1 w-44 bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-800"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      navigate(`/drip-campaigns/${c._id}`);
+                                    }}
+                                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-emerald-400 flex items-center gap-2 transition"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-cyan-400" /> View / Edit Sequence
+                                  </button>
 
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={isActionLoading}
-                          onClick={() => handleAction(c._id, 'duplicate')}
-                          className="text-xs bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-cyan-500/30 inline-flex items-center gap-1"
-                          title="Duplicate this campaign as a new draft"
-                        >
-                          <Copy className="w-3 h-3" /> Copy
-                        </Button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      handleAction(c._id, 'duplicate');
+                                    }}
+                                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-cyan-400 flex items-center gap-2 transition"
+                                  >
+                                    <Copy className="w-3.5 h-3.5 text-cyan-400" /> Duplicate (Copy)
+                                  </button>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/drip-campaigns/${c._id}`)}
-                          className="text-xs text-slate-300 hover:text-white inline-flex items-center gap-1"
-                        >
-                          View <ArrowRight className="w-3 h-3" />
-                        </Button>
+                                  {['active', 'scheduled', 'paused'].includes(c.status) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        handleAction(c._id, 'stop');
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 text-xs text-amber-300 hover:bg-amber-500/10 flex items-center gap-2 transition"
+                                    >
+                                      <Square className="w-3.5 h-3.5 text-amber-400" /> Stop Campaign
+                                    </button>
+                                  )}
+                                </div>
 
-                        <button
-                          type="button"
-                          title="Delete Campaign"
-                          disabled={isActionLoading}
-                          onClick={() => handleAction(c._id, 'delete')}
-                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition inline-flex items-center"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                                <div className="py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      handleAction(c._id, 'delete');
+                                    }}
+                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/15 flex items-center gap-2 transition font-medium"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Delete Campaign
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   );
