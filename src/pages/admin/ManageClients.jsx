@@ -5,7 +5,7 @@ import { useAuthContext } from '../../context/AuthContext'
 import { Card } from '../../components/ui/Card'
 import { Loader } from '../../components/ui/Loader'
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table'
-import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle, ChevronDown, ChevronUp, FileText, CheckCircle2, Clock, XCircle, Send, Zap, Eye } from 'lucide-react'
+import { Users, Plus, Trash2, Check, X, PhoneCall, ExternalLink, Edit2, Save, Key, Copy, RefreshCw, AlertCircle, ChevronDown, ChevronUp, FileText, CheckCircle2, Clock, XCircle, Send, Zap, Eye, MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { TemplatePreview } from '../../components/shared/TemplatePreview'
 
@@ -37,10 +37,18 @@ export default function ManageClients() {
   const [generatingKeys, setGeneratingKeys] = useState(false)
   const [copiedField, setCopiedField] = useState('')
   const { openWorkspaceInNewTab } = useAuthContext()
-  const navigate = useNavigate()
   const [previewTemplateId, setPreviewTemplateId] = useState(null)
+  const [openMenuId, setOpenMenuId] = useState(null)
 
+  useEffect(() => {
+    function handleGlobalClick() {
+      setOpenMenuId(null)
+    }
+    window.addEventListener('click', handleGlobalClick)
+    return () => window.removeEventListener('click', handleGlobalClick)
+  }, [])
 
+  const navigate = useNavigate()
 
   const [form, setForm] = useState({
     name: '',
@@ -631,21 +639,101 @@ export default function ManageClients() {
                       <div className="flex items-center justify-end gap-2">
                         {client.status === 'pending' && (
                           <>
-                            <button onClick={() => handleStatusChange(client._id, 'active')} className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all" title="Approve"><Check className="w-4 h-4" /></button>
-                            <button onClick={() => handleStatusChange(client._id, 'rejected')} className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 transition-all" title="Reject"><X className="w-4 h-4" /></button>
+                            <button
+                              onClick={() => handleStatusChange(client._id, 'active')}
+                              className="p-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all"
+                              title="Approve"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(client._id, 'rejected')}
+                              className="p-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 transition-all"
+                              title="Reject"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
                           </>
                         )}
-                        <button onClick={() => handleAccessPanel(client)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 font-extrabold text-xs transition-all"><span>Access Panel</span><ExternalLink className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => handleOpenSharing(client)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 font-extrabold text-xs transition-all"><Key className="w-3.5 h-3.5" /><span>API</span></button>
-                        <button onClick={() => handleStartEdit(client)} className="p-2 rounded-xl bg-[#080E1E] hover:bg-[#3B82F6]/15 text-slate-400 hover:text-[#3B82F6] border border-[#1E293B] transition-all" title="Edit"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(client._id, client.name)} className="p-2 rounded-xl bg-[#080E1E] hover:bg-red-500/15 text-slate-400 hover:text-red-400 border border-[#1E293B] transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
+
+                        {/* Primary Action Button */}
                         <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/admin/clients/${client._id}/templates`) }}
-                          className="p-2 rounded-xl bg-[#080E1E] border border-[#1E293B] text-slate-400 hover:text-[#25D366] hover:border-[#25D366]/40 transition-all text-xs font-bold"
-                          title="Manage Templates"
+                          onClick={() => handleAccessPanel(client)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 font-extrabold text-xs transition-all"
                         >
-                          <FileText className="w-4 h-4" />
+                          <span>Access Panel</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
                         </button>
+
+                        {/* Three-Dot Options Dropdown */}
+                        <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === client._id ? null : client._id);
+                            }}
+                            className="p-1.5 rounded-xl bg-[#080E1E] hover:bg-[#1E293B] text-slate-400 hover:text-white border border-[#1E293B] hover:border-slate-700 transition-all flex items-center justify-center"
+                            title="More Actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {openMenuId === client._id && (
+                            <div
+                              className="absolute right-0 mt-1 w-52 bg-[#0F172A] border border-[#1E293B] rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-[#1E293B] text-left"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="py-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleOpenSharing(client);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs text-purple-300 hover:bg-[#1E293B] hover:text-purple-200 flex items-center gap-2 transition"
+                                >
+                                  <Key className="w-3.5 h-3.5 text-purple-400" /> API Sharing Tokens
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    navigate(`/admin/clients/${client._id}/templates`);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-[#1E293B] hover:text-[#25D366] flex items-center gap-2 transition"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-[#25D366]" /> Manage Templates
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleStartEdit(client);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-[#1E293B] hover:text-[#3B82F6] flex items-center gap-2 transition"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 text-[#3B82F6]" /> Edit Account & Config
+                                </button>
+                              </div>
+
+                              <div className="py-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleDelete(client._id, client.name);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/15 flex items-center gap-2 transition font-medium"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Delete Client Account
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </TD>
                   </TR>
