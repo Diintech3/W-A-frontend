@@ -229,14 +229,14 @@ export default function DripCampaignList() {
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950/60 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 <tr>
-                  <th className="py-3.5 px-4">Campaign Name</th>
-                  <th className="py-3.5 px-4">Mode</th>
-                  <th className="py-3.5 px-4">Audience</th>
-                  <th className="py-3.5 px-4">Steps</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Messages &amp; Cost</th>
-                  <th className="py-3.5 px-4">Progress / Enrolled</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Campaign Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Mode</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Audience</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Steps</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Messages &amp; Cost</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Progress / Enrolled</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -251,18 +251,18 @@ export default function DripCampaignList() {
                       className="hover:bg-slate-800/40 transition cursor-pointer"
                       onClick={() => navigate(`/drip-campaigns/${c._id}`)}
                     >
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-white text-sm hover:text-emerald-400 transition">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="font-bold text-white text-sm hover:text-emerald-400 transition truncate max-w-[220px]">
                           {c.name}
                         </div>
                         {c.goalDescription && (
-                          <div className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5">
+                          <div className="text-[11px] text-slate-500 truncate max-w-[220px] mt-0.5">
                             {c.goalDescription}
                           </div>
                         )}
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                             c.mode === 'ai'
@@ -282,7 +282,7 @@ export default function DripCampaignList() {
                         </span>
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <div className="font-medium text-slate-200">
                           {c.audienceGroupId?.name || 'Contact Group'}
                         </div>
@@ -291,24 +291,24 @@ export default function DripCampaignList() {
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 font-bold text-cyan-400 font-mono">
+                      <td className="py-4 px-4 whitespace-nowrap font-bold text-cyan-400 font-mono">
                         {c.totalSteps || 0} Steps ({c.durationDays || 30}d)
                       </td>
 
-                      <td className="py-4 px-4">{getStatusBadge(c.status)}</td>
+                      <td className="py-4 px-4 whitespace-nowrap">{getStatusBadge(c.status)}</td>
 
-                      <td className="py-4 px-4">
-                        <div className="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1.5">
                           <span>₹{campaignSpent.toLocaleString()}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">({stats.totalSent || 0} sent)</span>
+                          <span className="text-[10px] text-slate-400 font-normal font-sans">({stats.totalSent || 0} sent)</span>
                         </div>
                         <div className="text-[10px] text-slate-500">
                           {stats.deliveredCount || stats.totalSent || 0} delivered
                         </div>
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="space-y-1 min-w-[120px]">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="space-y-1 min-w-[120px] max-w-[140px]">
                           <div className="flex justify-between text-[10px]">
                             <span className="text-slate-400">Active: {stats.active || 0}</span>
                             <span className="text-emerald-400 font-bold">
@@ -331,17 +331,17 @@ export default function DripCampaignList() {
                       </td>
 
                       <td
-                        className="py-4 px-4 text-right"
+                        className="py-4 px-4 text-right whitespace-nowrap"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
                           {c.status === 'active' && (
                             <Button
                               variant="secondary"
                               size="sm"
                               disabled={isActionLoading}
                               onClick={() => handleAction(c._id, 'pause')}
-                              className="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/30 inline-flex items-center gap-1"
+                              className="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/30 inline-flex items-center gap-1 px-2.5 py-1"
                             >
                               <Pause className="w-3 h-3" /> Pause
                             </Button>
@@ -353,22 +353,11 @@ export default function DripCampaignList() {
                               size="sm"
                               disabled={isActionLoading}
                               onClick={() => handleAction(c._id, 'resume')}
-                              className="text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 inline-flex items-center gap-1"
+                              className="text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 inline-flex items-center gap-1 px-2.5 py-1"
                             >
                               <Play className="w-3 h-3" /> Resume
                             </Button>
                           )}
-
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={isActionLoading}
-                            onClick={() => handleAction(c._id, 'duplicate')}
-                            className="text-xs bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-cyan-500/30 inline-flex items-center gap-1"
-                            title="Duplicate this campaign as a new draft"
-                          >
-                            <Copy className="w-3 h-3" /> Copy
-                          </Button>
 
                           {/* Three-Dot Options Dropdown */}
                           <div className="relative inline-block text-left">
@@ -378,7 +367,7 @@ export default function DripCampaignList() {
                                 e.stopPropagation();
                                 setOpenMenuId(openMenuId === c._id ? null : c._id);
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition border border-transparent hover:border-slate-700 inline-flex items-center justify-center"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-950/60 hover:bg-slate-800 transition border border-slate-800 hover:border-slate-700 inline-flex items-center justify-center"
                               title="More Options"
                             >
                               <MoreVertical className="w-4 h-4" />
