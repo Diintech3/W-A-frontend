@@ -219,6 +219,26 @@ export default function TimelineBuilder({
                         STEP {idx + 1}
                       </span>
 
+                      {/* Step Progress Status Pill (Dispatched / In Progress / Upcoming) */}
+                      {step.progress?.isCompleted ? (
+                        <span className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> DISPATCHED ({step.progress.sentCount} sent)
+                          {step.progress.lastSentAt && (
+                            <span className="text-[10px] text-emerald-400/80 font-normal">
+                              at {new Date(step.progress.lastSentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </span>
+                      ) : step.progress?.isCurrent ? (
+                        <span className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1.5 animate-pulse">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" /> NEXT IN QUEUE
+                        </span>
+                      ) : readOnly && step.progress?.isPending ? (
+                        <span className="whitespace-nowrap text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-400 border border-slate-700/80 inline-flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-500" /> UPCOMING
+                        </span>
+                      ) : null}
+
                       {/* Meta Approval Pill */}
                       {isApproved ? (
                         <span className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5">
@@ -424,6 +444,34 @@ export default function TimelineBuilder({
                       variableMapping={step.variableMapping || []}
                       onChange={(newMapping) => handleUpdateStep(idx, { variableMapping: newMapping })}
                     />
+                  )}
+
+                  {/* Step Delivery Stats Row */}
+                  {step.progress && (step.progress.sentCount > 0 || step.progress.failedCount > 0) && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/90 p-3 rounded-xl border border-slate-800 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-slate-400 font-semibold">Step Execution:</span>
+                        <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                          ✓ {step.progress.sentCount} Sent
+                        </span>
+                        <span className="text-cyan-400 font-bold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                          📨 {step.progress.deliveredCount} Delivered
+                        </span>
+                        <span className="text-purple-400 font-bold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                          👁️ {step.progress.readCount} Read
+                        </span>
+                        {step.progress.failedCount > 0 && (
+                          <span className="text-rose-400 font-bold px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                            ⚠️ {step.progress.failedCount} Failed
+                          </span>
+                        )}
+                      </div>
+                      {step.progress.lastSentAt && (
+                        <span className="text-[11px] text-slate-500">
+                          Last Dispatched: {new Date(step.progress.lastSentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

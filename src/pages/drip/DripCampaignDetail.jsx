@@ -53,6 +53,7 @@ export default function DripCampaignDetail() {
 
   const [campaign, setCampaign] = useState(null);
   const [steps, setSteps] = useState([]);
+  const [progressSummary, setProgressSummary] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
@@ -82,6 +83,7 @@ export default function DripCampaignDetail() {
       if (res.data?.success) {
         setCampaign(res.data.data.campaign);
         setSteps(res.data.data.steps || []);
+        setProgressSummary(res.data.data.progressSummary || null);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load campaign');
@@ -377,6 +379,59 @@ export default function DripCampaignDetail() {
           <div className="text-[10px] text-slate-500">Meta Conversation fees</div>
         </div>
       </div>
+
+      {/* Live Campaign Step Progress Tracker */}
+      {progressSummary && (
+        <Card
+          className={`p-5 border transition-all ${
+            progressSummary.isFullyCompleted
+              ? 'bg-gradient-to-r from-emerald-950/40 via-slate-900 to-emerald-950/30 border-emerald-500/40 shadow-lg shadow-emerald-500/5'
+              : 'bg-slate-900/90 border-slate-800'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Rocket className="w-3.5 h-3.5 text-emerald-400" /> Sequence Progress
+              </span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                {progressSummary.completedStepsCount} of {progressSummary.totalSteps} Steps Dispatched
+              </span>
+              {progressSummary.remainingStepsCount > 0 ? (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  {progressSummary.remainingStepsCount} Step(s) Remaining
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-blue-400" /> ALL STEPS COMPLETED
+                </span>
+              )}
+            </div>
+
+            <div className="text-xs font-bold text-emerald-400 font-mono">
+              {progressSummary.overallProgressPercent}% Complete
+            </div>
+          </div>
+
+          {/* Animated Progress Bar */}
+          <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-0.5">
+            <div
+              className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-sm shadow-emerald-500/50"
+              style={{ width: `${Math.max(3, progressSummary.overallProgressPercent)}%` }}
+            />
+          </div>
+
+          {/* Completion Status Alert */}
+          {progressSummary.isFullyCompleted && (
+            <div className="mt-3.5 pt-3 border-t border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-300 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>
+                <strong>Campaign Completed & Stopped:</strong> All {progressSummary.totalSteps} message steps have been delivered to all {progressSummary.totalEnrolled} enrolled contact(s).
+              </span>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Tabs Switcher */}
       <div className="border-b border-slate-800 flex gap-6 text-sm font-semibold">
