@@ -263,12 +263,11 @@ export default function DripCampaignList() {
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <Badge
-                          variant={c.mode === 'ai' ? 'default' : 'secondary'}
-                          className={`text-[10px] uppercase font-bold flex items-center gap-1 w-fit ${
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                             c.mode === 'ai'
-                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                              : 'bg-slate-800 text-slate-300 border-slate-700'
+                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                              : 'bg-slate-800 text-slate-300 border border-slate-700'
                           }`}
                         >
                           {c.mode === 'ai' ? (
@@ -280,7 +279,7 @@ export default function DripCampaignList() {
                               <Wrench className="w-2.5 h-2.5 text-slate-400" /> Manual
                             </>
                           )}
-                        </Badge>
+                        </span>
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">
@@ -316,14 +315,18 @@ export default function DripCampaignList() {
                               Conv: {stats.converted || 0}
                             </span>
                           </div>
-                          <Progress
-                            value={
-                              stats.totalEnrolled > 0
-                                ? Math.min(100, Math.round(((stats.converted || 0) / stats.totalEnrolled) * 100))
-                                : 0
-                            }
-                            className="h-1.5 bg-slate-800"
-                          />
+                          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-1.5 rounded-full"
+                              style={{
+                                width: `${
+                                  stats.totalEnrolled > 0
+                                    ? Math.min(100, Math.round(((stats.converted || 0) / stats.totalEnrolled) * 100))
+                                    : 0
+                                }%`,
+                              }}
+                            />
+                          </div>
                         </div>
                       </td>
 
