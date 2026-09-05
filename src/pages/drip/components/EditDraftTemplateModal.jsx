@@ -33,6 +33,9 @@ export default function EditDraftTemplateModal({ isOpen, onClose, template, onTe
   const [footerText, setFooterText] = useState('');
   const [buttons, setButtons] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submittingToAdmin, setSubmittingToAdmin] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
   function compressImageFile(file, maxDimension = 1080, quality = 0.85) {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -79,6 +82,7 @@ export default function EditDraftTemplateModal({ isOpen, onClose, template, onTe
       return;
     }
 
+    setUploadingMedia(true);
     try {
       const optimizedDataUrl = await compressImageFile(file, 1080, 0.85);
       if (optimizedDataUrl) {
@@ -92,6 +96,8 @@ export default function EditDraftTemplateModal({ isOpen, onClose, template, onTe
         if (event.target?.result) setMediaUrl(event.target.result);
       };
       reader.readAsDataURL(file);
+    } finally {
+      setUploadingMedia(false);
     }
   }
 

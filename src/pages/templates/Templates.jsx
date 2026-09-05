@@ -87,6 +87,8 @@ export default function Templates() {
   const [reqButtons, setReqButtons] = useState([])
   const [reqVariables, setReqVariables] = useState([])
   const [submittingRequest, setSubmittingRequest] = useState(false)
+  const [uploadingReqMedia, setUploadingReqMedia] = useState(false)
+
   function compressImageFile(file, maxDimension = 1080, quality = 0.85) {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -133,6 +135,7 @@ export default function Templates() {
       return
     }
 
+    setUploadingReqMedia(true)
     try {
       const optimizedDataUrl = await compressImageFile(file, 1080, 0.85);
       if (optimizedDataUrl) {
@@ -146,6 +149,8 @@ export default function Templates() {
         if (event.target?.result) setReqMediaUrl(event.target.result);
       };
       reader.readAsDataURL(file);
+    } finally {
+      setUploadingReqMedia(false)
     }
   }
 
