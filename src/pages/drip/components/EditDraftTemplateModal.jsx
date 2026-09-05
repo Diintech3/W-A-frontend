@@ -36,7 +36,7 @@ export default function EditDraftTemplateModal({ isOpen, onClose, template, onTe
   const [submittingToAdmin, setSubmittingToAdmin] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
 
-  async function handleImageUpload(e) {
+  function handleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -45,27 +45,15 @@ export default function EditDraftTemplateModal({ isOpen, onClose, template, onTe
       return;
     }
 
-    // Local instant preview
-    const localUrl = URL.createObjectURL(file);
-    setMediaUrl(localUrl);
-
-    // Upload to server/R2
-    setUploadingMedia(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await templatesApi.uploadMedia(formData);
-      if (res.data?.success && res.data.data?.url) {
-        setMediaUrl(res.data.data.url);
-        toast.success('Image selected and uploaded successfully!');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Data = event.target?.result;
+      if (base64Data) {
+        setMediaUrl(base64Data);
+        toast.success('Image selected and loaded successfully!');
       }
-    } catch (err) {
-      console.warn('Upload fallback to local preview URL:', err);
-      toast.success('Image loaded for template preview');
-    } finally {
-      setUploadingMedia(false);
-    }
+    };
+    reader.readAsDataURL(file);
   }
 
   useEffect(() => {

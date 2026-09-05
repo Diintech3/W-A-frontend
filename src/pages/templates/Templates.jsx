@@ -89,7 +89,7 @@ export default function Templates() {
   const [submittingRequest, setSubmittingRequest] = useState(false)
   const [uploadingReqMedia, setUploadingReqMedia] = useState(false)
 
-  async function handleReqImageUpload(e) {
+  function handleReqImageUpload(e) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -98,36 +98,15 @@ export default function Templates() {
       return
     }
 
-    const localUrl = URL.createObjectURL(file)
-    setReqMediaUrl(localUrl)
-
-    setUploadingReqMedia(true)
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const res = await templatesApi.uploadMedia(formData)
-      if (res.data?.success && res.data.data?.url) {
-        let uploadedUrl = res.data.data.url;
-        if (uploadedUrl.includes('r2.cloudflarestorage.com')) {
-          const publicBase = 'https://pub-922d0b8e92144ec8adc99d837e581709.r2.dev';
-          const parts = uploadedUrl.split('/templates/');
-          if (parts.length > 1) {
-            uploadedUrl = `${publicBase}/templates/${parts[1]}`;
-          } else {
-            const anyParts = uploadedUrl.split('/yovoai/');
-            if (anyParts.length > 1) uploadedUrl = `${publicBase}/${anyParts[1]}`;
-          }
-        }
-        setReqMediaUrl(uploadedUrl)
-        toast.success('Image selected and uploaded successfully!')
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Data = event.target?.result;
+      if (base64Data) {
+        setReqMediaUrl(base64Data);
+        toast.success('Image selected and loaded successfully!');
       }
-    } catch (err) {
-      console.warn('Upload fallback to local preview URL:', err)
-      toast.success('Image loaded for template preview')
-    } finally {
-      setUploadingReqMedia(false)
-    }
+    };
+    reader.readAsDataURL(file);
   }
 
   function handleAddButton(type) {
