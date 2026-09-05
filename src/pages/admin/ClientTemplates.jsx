@@ -225,14 +225,23 @@ export default function ClientTemplates() {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           {tmpl.metaStatus === 'PENDING_ADMIN_APPROVAL' && (
-                            <button
-                              onClick={() => handleSubmitToMeta(tmpl._id)}
-                              disabled={submittingId === tmpl._id}
-                              className="p-2 rounded-xl bg-[#0A1122] border border-[#1E293B] hover:border-emerald-500/30 hover:bg-emerald-500/15 text-slate-400 hover:text-emerald-400 transition-all disabled:opacity-50"
-                              title="Submit to Meta Graph API for Approval"
-                            >
-                              <Send className="w-4 h-4" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleSubmitToMeta(tmpl._id)}
+                                disabled={submittingId === tmpl._id}
+                                className="p-2 rounded-xl bg-[#0A1122] border border-[#1E293B] hover:border-emerald-500/30 hover:bg-emerald-500/15 text-slate-400 hover:text-emerald-400 transition-all disabled:opacity-50"
+                                title="Submit to Meta Graph API for Official Approval"
+                              >
+                                <Send className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDirectApprove(tmpl._id)}
+                                className="p-2 rounded-xl bg-[#0A1122] border border-[#1E293B] hover:border-blue-500/30 hover:bg-blue-500/15 text-slate-400 hover:text-blue-400 transition-all"
+                                title="Direct Approve (Mark Approved Directly)"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={() => setPreviewTemplateId(previewTemplateId === tmpl._id ? null : tmpl._id)}
