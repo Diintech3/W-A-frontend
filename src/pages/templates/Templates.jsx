@@ -87,9 +87,44 @@ export default function Templates() {
   const [reqButtons, setReqButtons] = useState([])
   const [reqVariables, setReqVariables] = useState([])
   const [submittingRequest, setSubmittingRequest] = useState(false)
-  const [uploadingReqMedia, setUploadingReqMedia] = useState(false)
+  function compressImageFile(file, maxDimension = 1080, quality = 0.85) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
 
-  function handleReqImageUpload(e) {
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => {
+          resolve(e.target?.result);
+        };
+        img.src = e.target?.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleReqImageUpload(e) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -98,15 +133,20 @@ export default function Templates() {
       return
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Data = event.target?.result;
-      if (base64Data) {
-        setReqMediaUrl(base64Data);
-        toast.success('Image selected and loaded successfully!');
+    try {
+      const optimizedDataUrl = await compressImageFile(file, 1080, 0.85);
+      if (optimizedDataUrl) {
+        setReqMediaUrl(optimizedDataUrl);
+        toast.success('Image optimized and loaded successfully!');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn('Fallback direct read:', err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) setReqMediaUrl(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   function handleAddButton(type) {
