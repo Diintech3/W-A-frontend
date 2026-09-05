@@ -1,6 +1,23 @@
 import React from 'react';
 import { Image as ImageIcon, Video, FileText, Phone, ExternalLink, MessageSquare } from 'lucide-react';
 
+function resolvePublicMediaUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  let str = url.trim();
+  if (str.includes('r2.cloudflarestorage.com')) {
+    const publicBase = 'https://pub-922d0b8e92144ec8adc99d837e581709.r2.dev';
+    const pathParts = str.split('/templates/');
+    if (pathParts.length > 1) {
+      return `${publicBase}/templates/${pathParts[1]}`;
+    }
+    const anyParts = str.split('/yovoai/');
+    if (anyParts.length > 1) {
+      return `${publicBase}/${anyParts[1]}`;
+    }
+  }
+  return str;
+}
+
 export function TemplatePreview({
   name,
   bodyPreview,
@@ -16,6 +33,7 @@ export function TemplatePreview({
   const isVideo = headerType === 'VIDEO';
   const isDoc = headerType === 'DOCUMENT';
   const isText = headerType === 'TEXT' || (headerText && !['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType));
+  const activeMediaUrl = resolvePublicMediaUrl(mediaUrl);
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-[#0B141A] p-4 shadow-2xl max-w-sm mx-auto font-sans">
@@ -33,9 +51,9 @@ export function TemplatePreview({
         {/* Header: Media (Image/Video/Doc) */}
         {isImage && (
           <div className="w-full h-40 bg-slate-900 relative flex items-center justify-center overflow-hidden border-b border-slate-700/40">
-            {mediaUrl ? (
+            {activeMediaUrl ? (
               <img
-                src={mediaUrl}
+                src={activeMediaUrl}
                 alt="Template Header"
                 className="w-full h-full object-cover"
                 onError={(e) => {

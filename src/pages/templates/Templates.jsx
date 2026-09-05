@@ -108,7 +108,18 @@ export default function Templates() {
     try {
       const res = await templatesApi.uploadMedia(formData)
       if (res.data?.success && res.data.data?.url) {
-        setReqMediaUrl(res.data.data.url)
+        let uploadedUrl = res.data.data.url;
+        if (uploadedUrl.includes('r2.cloudflarestorage.com')) {
+          const publicBase = 'https://pub-922d0b8e92144ec8adc99d837e581709.r2.dev';
+          const parts = uploadedUrl.split('/templates/');
+          if (parts.length > 1) {
+            uploadedUrl = `${publicBase}/templates/${parts[1]}`;
+          } else {
+            const anyParts = uploadedUrl.split('/yovoai/');
+            if (anyParts.length > 1) uploadedUrl = `${publicBase}/${anyParts[1]}`;
+          }
+        }
+        setReqMediaUrl(uploadedUrl)
         toast.success('Image selected and uploaded successfully!')
       }
     } catch (err) {
@@ -583,7 +594,20 @@ export default function Templates() {
 
                   <Input
                     value={reqMediaUrl}
-                    onChange={(e) => setReqMediaUrl(e.target.value)}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.includes('r2.cloudflarestorage.com')) {
+                        const publicBase = 'https://pub-922d0b8e92144ec8adc99d837e581709.r2.dev';
+                        const parts = val.split('/templates/');
+                        if (parts.length > 1) {
+                          val = `${publicBase}/templates/${parts[1]}`;
+                        } else {
+                          const anyParts = val.split('/yovoai/');
+                          if (anyParts.length > 1) val = `${publicBase}/${anyParts[1]}`;
+                        }
+                      }
+                      setReqMediaUrl(val);
+                    }}
                     placeholder="https://yourdomain.com/banner.jpg"
                     className="bg-[#0A1122] border-[#1E293B] text-xs font-mono"
                   />
