@@ -224,8 +224,8 @@ export default function TimelineBuilder({
                         STEP {idx + 1}
                       </span>
 
-                      {/* Step Progress Status Pill (Dispatched / In Progress / Upcoming) */}
-                      {step.progress?.isCompleted ? (
+                      {/* Step Progress Status Pill (Dispatched / Meta Blocked / In Progress / Upcoming) */}
+                      {step.progress?.isCompleted && step.progress?.sentCount > 0 ? (
                         <span className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> DISPATCHED ({step.progress.sentCount} sent)
                           {step.progress.lastSentAt && (
@@ -233,6 +233,13 @@ export default function TimelineBuilder({
                               at {new Date(step.progress.lastSentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           )}
+                        </span>
+                      ) : step.progress?.isFailed || (step.progress?.failedCount > 0 && step.progress?.sentCount === 0) ? (
+                        <span
+                          className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-flex items-center gap-1.5 shadow-sm shadow-rose-500/10"
+                          title={step.progress?.lastErrorReason || 'Meta rejected message'}
+                        >
+                          <X className="w-3.5 h-3.5 text-rose-400" /> META BLOCKED ({step.progress?.lastErrorReason ? step.progress.lastErrorReason.slice(0, 30) + '...' : 'Delivery Failed'})
                         </span>
                       ) : step.progress?.isCurrent ? (
                         <span className="whitespace-nowrap text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1.5 animate-pulse">
