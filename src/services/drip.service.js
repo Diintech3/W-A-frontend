@@ -20,6 +20,8 @@ export const dripService = {
   testSendStep: (id, stepId, body) => api.post(`/drip-campaigns/${id}/test-step/${stepId}`, body),
   dispatchEnrollmentNow: (id, enrollmentId) =>
     api.post(`/drip-campaigns/${id}/enrollments/${enrollmentId}/dispatch-now`),
+  dispatchDueSteps: (id, data) => api.post(`/drip-campaigns/${id}/dispatch-due`, data),
+  retryFailed: (id) => api.post(`/drip-campaigns/${id}/retry-failed`),
 };
 
 export default dripService;

@@ -25,6 +25,8 @@ import {
   Copy,
   Wrench,
   Clock,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import dripService from '../../services/drip.service';
 import { templatesApi, contactsApi } from '../../services/api';
@@ -311,6 +313,42 @@ export default function DripCampaignDetail() {
   }
 
   const [dispatchingId, setDispatchingId] = useState(null);
+  const [dispatchingAll, setDispatchingAll] = useState(false);
+  const [retryingFailed, setRetryingFailed] = useState(false);
+
+  async function handleDispatchDueAll(force = false) {
+    setDispatchingAll(true);
+    try {
+      const res = await dripService.dispatchDueSteps(id, { force });
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Drip cycle executed! Dispatched due messages.');
+        loadCampaign();
+        loadAnalytics();
+        loadEnrollments();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to dispatch due steps');
+    } finally {
+      setDispatchingAll(false);
+    }
+  }
+
+  async function handleRetryFailed() {
+    setRetryingFailed(true);
+    try {
+      const res = await dripService.retryFailed(id);
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Failed contacts reset and queued for retry!');
+        loadCampaign();
+        loadAnalytics();
+        loadEnrollments();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to retry contacts');
+    } finally {
+      setRetryingFailed(false);
+    }
+  }
 
   async function handleToggleEnrollment(enrollmentId, currentStatus) {
     const nextStatus = currentStatus === 'opted_out' ? 'active' : 'opted_out';
@@ -439,7 +477,24 @@ export default function DripCampaignDetail() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {/* Dispatch All Due Steps Now button for active / scheduled campaigns */}
+          {['active', 'scheduled'].includes(campaign.status) && (
+            <Button
+              onClick={() => handleDispatchDueAll(false)}
+              disabled={dispatchingAll || actionLoading}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs px-4 py-2 shadow-lg flex items-center gap-1.5"
+              title="Immediately check and send all steps that are due right now without waiting for background cron"
+            >
+              {dispatchingAll ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+              )}
+              {dispatchingAll ? 'Dispatching...' : '⚡ Dispatch Due Now'}
+            </Button>
+          )}
+
           {['draft', 'awaiting_approval'].includes(campaign.status) && (
             <Button
               onClick={handleActivate}
@@ -457,7 +512,7 @@ export default function DripCampaignDetail() {
               disabled={actionLoading}
               className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30 text-xs inline-flex items-center gap-1"
             >
-              <Pause className="w-3.5 h-3.5" /> Pause Campaign
+              <Pause className="w-3.5 h-3.5" /> Pause
             </Button>
           )}
 
@@ -467,7 +522,7 @@ export default function DripCampaignDetail() {
               disabled={actionLoading}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 inline-flex items-center gap-1"
             >
-              <Play className="w-3.5 h-3.5" /> Resume Campaign
+              <Play className="w-3.5 h-3.5" /> Resume
             </Button>
           )}
 
@@ -607,6 +662,60 @@ export default function DripCampaignDetail() {
             </div>
           )}
         </Card>
+      )}
+
+      {/* Unapproved Step Template Warning Banner */}
+      {progressSummary?.unapprovedStepsCount > 0 && ['active', 'scheduled', 'paused'].includes(campaign.status) && (
+        <div className="bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/40 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-amber-500/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+            <div>
+              <h4 className="text-xs font-bold text-amber-300">
+                ⚠️ Sequence Halt Warning: Step {progressSummary.unapprovedStepNumbers?.join(', ')} Template Not Approved on Meta!
+              </h4>
+              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                Step 1 may have sent successfully, but contacts arriving at Step {progressSummary.unapprovedStepNumbers?.join(', ')} will be paused until their templates are approved. Click on "Sequence & Steps" below to swap or approve the template.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setActiveTab('timeline')}
+            className="whitespace-nowrap text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-3 py-1.5 self-start sm:self-center"
+          >
+            Review Unapproved Steps
+          </Button>
+        </div>
+      )}
+
+      {/* Failed Contacts Retry Banner */}
+      {progressSummary?.failedEnrollments > 0 && (
+        <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-500/40 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-rose-500/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-bold text-rose-300">
+                {progressSummary.failedEnrollments} Contact(s) Failed Delivery
+              </h4>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Delivery failed due to Meta rate limits or unapproved templates. Click "Retry Failed Contacts" to re-queue them for immediate dispatch.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleRetryFailed}
+            disabled={retryingFailed}
+            className="whitespace-nowrap text-xs bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 self-start sm:self-center inline-flex items-center gap-1.5"
+          >
+            {retryingFailed ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            {retryingFailed ? 'Retrying...' : '🔄 Retry Failed Contacts'}
+          </Button>
+        </div>
       )}
 
       {/* Tabs Switcher */}
@@ -876,8 +985,8 @@ export default function DripCampaignDetail() {
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-3" />
             </div>
 
-            <div className="flex gap-2">
-              {['', 'active', 'converted', 'opted_out', 'completed', 'paused'].map((st) => (
+            <div className="flex gap-2 flex-wrap">
+              {['', 'active', 'failed', 'converted', 'opted_out', 'completed', 'paused'].map((st) => (
                 <button
                   key={st}
                   onClick={() => {
@@ -934,6 +1043,8 @@ export default function DripCampaignDetail() {
                       <td className="py-3.5 px-4 text-slate-300 font-mono text-xs">
                         {enr.status === 'completed' ? (
                           <span className="text-slate-500">None (Finished)</span>
+                        ) : enr.status === 'failed' ? (
+                          <span className="text-rose-400 font-semibold">Failed (Retryable)</span>
                         ) : enr.nextDueAt ? (
                           <span className="text-cyan-300 font-semibold">
                             {formatDueCountdown(enr.nextDueAt)}
@@ -953,6 +1064,8 @@ export default function DripCampaignDetail() {
                               ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
                               : enr.status === 'opted_out'
                               ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              : enr.status === 'failed'
+                              ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                               : 'bg-slate-800 text-slate-400 border-slate-700'
                           }`}
                         >
@@ -961,6 +1074,18 @@ export default function DripCampaignDetail() {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {enr.status === 'failed' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={dispatchingId === enr._id}
+                              onClick={() => handleDispatchNow(enr._id)}
+                              className="text-[11px] bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border-rose-500/30 font-semibold inline-flex items-center gap-1"
+                              title="Retry and send step to this contact immediately"
+                            >
+                              <RefreshCw className="w-3 h-3" /> Retry Now
+                            </Button>
+                          )}
                           {enr.status === 'active' && enr.currentStepIndex < steps.length && (
                             <Button
                               variant="outline"
