@@ -91,6 +91,17 @@ export default function DripCampaignDetail() {
     if (activeTab === 'contacts') loadEnrollments();
   }, [activeTab, id, enrollmentPage, enrollmentSearch, enrollmentStatusFilter]);
 
+  // Live real-time polling when campaign is actively running
+  useEffect(() => {
+    if (!campaign || campaign.status !== 'active') return;
+    const interval = setInterval(() => {
+      loadCampaign(false);
+      if (activeTab === 'analytics') loadAnalytics();
+      if (activeTab === 'contacts') loadEnrollments();
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [campaign?.status, activeTab, id]);
+
   async function loadGroups() {
     try {
       const res = await contactsApi.groups();
@@ -107,8 +118,8 @@ export default function DripCampaignDetail() {
     }
   }
 
-  async function loadCampaign() {
-    setLoading(true);
+  async function loadCampaign(showLoading = true) {
+    if (showLoading) setLoading(true);
     try {
       const res = await dripService.get(id);
       if (res.data?.success) {
@@ -118,9 +129,9 @@ export default function DripCampaignDetail() {
         setProgressSummary(res.data.data.progressSummary || null);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to load campaign');
+      if (showLoading) toast.error(err.response?.data?.message || 'Failed to load campaign');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }
 
